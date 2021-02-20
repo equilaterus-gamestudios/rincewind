@@ -5,7 +5,7 @@
 Context::Context()
     :TraceParsing(false), TraceScanning(false), CurrentRow(0)
 {
-    Identifiers["_end"] = -1;
+    Identifiers["end"] = -1;
 }
 
 

@@ -49,14 +49,14 @@
     <ClInclude Include="Context.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="location.hh">
-      <Filter>Generated Files</Filter>
-    </ClInclude>
     <ClInclude Include="Types.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CodeGenerator.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="location.hh">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

@@ -8,19 +8,19 @@ extern FILE* yyin;
 
 int main(int argc, char** argv)
 {
-    std::string filename = "dialogtest.txt";
+    std::string filename = "dialogtest.md";
     FILE* a = fopen(filename.c_str(), "r");
     yyin = fopen(filename.c_str(), "r");
     Context ctx = Context();
 
-    yy::parser parser(ctx);
+    yy::parser parser(ctx);    
     parser.parse();
     
     CodeGenerator Generator = CodeGenerator(&ctx);
     Generator.ProcessJumpStatements();
     std::string CodeGenerated = Generator.GenerateCode();
 
-    std::ofstream o("Dialog1.jsontar");
+    std::ofstream o("dialogtest.dialog");
     o << CodeGenerated;
 
     return 0;

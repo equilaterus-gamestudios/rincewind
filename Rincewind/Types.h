@@ -64,11 +64,12 @@ struct SStatement
 		Statement.bByPass = false;
 		return Statement;
 	}
-	static SStatement CreateJump(std::string Label)
+	static SStatement CreateJump(std::string Text, std::string Label)
 	{
 		SStatement Statement = SStatement();
 		Statement.Name = "JumpTo";
 		Statement.Type = EStatementType::ESTJump;
+		Statement.AddParameter("Text", Text);
 		Statement.AddParameter("Line", Label);
 		Statement.bByPass = false;
 		return Statement;

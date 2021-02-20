@@ -37,9 +37,10 @@ void CodeGenerator::ProcessJumpStatements(SStatement* ParentStatement, TStatemen
 			}
 			int Row = CodeContext->Identifiers[Label];
 
-			if (ParentStatement && ParentStatement->Type == EStatementType::ESTOption)
+			if (ParentStatement && (ParentStatement->Type == EStatementType::ESTOption || ParentStatement->Type == EStatementType::ESTDialog))
 			{
 				ParentStatement->AddParameter("JumpTo", std::to_string(Row));
+				ParentStatement->Parameters["Text"] = Statement.Parameters["Text"];
 				Statement.bByPass = true;
 			}
 			else
