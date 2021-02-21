@@ -12,9 +12,16 @@ int main(int argc, char** argv)
     FILE* a = fopen(filename.c_str(), "r");
     yyin = fopen(filename.c_str(), "r");
     Context ctx = Context();
-
+    
     yy::parser parser(ctx);    
     parser.parse();
+
+    if (ctx.Errors != 0)
+    {
+        std::cout << "Errors were found, fix the source file and recompile again to generate a target file.\n";
+
+        return -1;
+    }
     
     CodeGenerator Generator = CodeGenerator(&ctx);
     Generator.ProcessJumpStatements();

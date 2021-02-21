@@ -3,7 +3,7 @@
 
 
 Context::Context()
-    :TraceParsing(false), TraceScanning(false), CurrentRow(0)
+    :TraceParsing(false), TraceScanning(false), CurrentRow(0), Errors(0)
 {
     Identifiers["end"] = -1;
 }

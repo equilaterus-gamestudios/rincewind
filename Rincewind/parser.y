@@ -51,7 +51,7 @@
 %type<std::string>	NUMCONST
 %type<std::string>	TEXT
 
-%type<SStatement> dialog option command jump label
+%type<SStatement> dialog option command jump
 %type<TStatements> options
 
 %start script
@@ -68,6 +68,7 @@ statement:		dialog							{ ctx.Statements.push_back($1); ctx.CurrentRow += 2;	}
 |				command							{ ctx.Statements.push_back($1); ++ctx.CurrentRow;		}
 |				jump							{ ctx.Statements.push_back($1); ++ctx.CurrentRow;		}
 |				LABEL							{ ctx.AddIdentifier($1, ctx.CurrentRow);				}
+|				error
 ;
 
 dialog:			"-" TEXT ":" TEXT				{ $$ = SStatement::CreateDialog($2, $4); }
@@ -88,11 +89,10 @@ command:		"$" IDENTIFIER "=" NUMCONST		{ $$ = SStatement::CreateCommand($2, $4);
 
 jump:			"[" TEXT "]" "(" LABEL ")"		{ $$ = SStatement::CreateJump($2, $5); }
 ;
-
-label:			"@" IDENTIFIER					{ $$ = SStatement::CreateLabel($2); }
 %%
 
 void yy::parser::error (const location_type& loc, const std::string& msg)
 {
+	ctx.Errors++;
 	std::cout << "Syntax Error: (" << loc.begin.line << ", " << loc.begin.column << ") - " << msg << '\n';	
 }

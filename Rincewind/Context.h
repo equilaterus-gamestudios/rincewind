@@ -35,4 +35,6 @@ public:
     bool TraceScanning;
 
     yy::location loc;
+
+    int Errors;
 };
