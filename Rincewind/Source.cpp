@@ -30,5 +30,8 @@ int main(int argc, char** argv)
     std::ofstream o("dialogtest.dialog");
     o << CodeGenerated;
 
+    std::cout << "Compilation was successfull\n";
+    std::cout << "File has been generated\n";
+
     return 0;
 }
