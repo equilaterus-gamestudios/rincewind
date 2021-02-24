@@ -73,7 +73,7 @@ statement:		dialog							{ ctx.Statements.push_back($1); ctx.CurrentRow += 2;	}
 
 dialog:			"-" TEXT ":" TEXT				{ $$ = SStatement::CreateDialog($2, $4); }
 |				"-" TEXT ":" jump				{ auto Dialog = SStatement::CreateDialog($2, ""); Dialog.AddInternalStatement($4); $$ = Dialog;  }
-|				"-" TEXT ":" options			{ auto Dialog = SStatement::CreateDialog($2, ""); Dialog.InternalStatement = $4; $$ = Dialog; }
+|				"-" TEXT ":" options			{ auto Dialog = SStatement::CreateDialog($2, "", true); Dialog.InternalStatement = $4; $$ = Dialog; }
 ;
 
 options:		options option					{ $1.push_back($2); $$ = $1;}

@@ -3,9 +3,10 @@
 #include <vector>
 #include <map>
 
-enum EStatementType
+enum class EStatementType
 {
 	ESTDialog,
+	ESTDialogWithOptions,
 	ESTOption,
 	ESTCommand,
 	ESTJump,
@@ -33,11 +34,11 @@ struct SStatement
 		InternalStatement.push_back(Statement);
 	}
 
-	static SStatement CreateDialog(std::string Title, std::string Text)
+	static SStatement CreateDialog(std::string Title, std::string Text, bool hasOptions = false)
 	{
 		SStatement Statement = SStatement();
 		Statement.Name = "SetDialog";
-		Statement.Type = EStatementType::ESTDialog;
+		Statement.Type = hasOptions ? EStatementType::ESTDialogWithOptions : EStatementType::ESTDialog;
 		Statement.AddParameter("Title", Title);
 		Statement.AddParameter("Text", Text);
 		Statement.bByPass = false;

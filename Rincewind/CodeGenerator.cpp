@@ -82,11 +82,14 @@ std::string CodeGenerator::GenerateCode(TStatements& Statemets)
 			}
 		}
 
+		if (Statement.Type == EStatementType::ESTDialogWithOptions)
+		{
+			Code += "," + WAIT_OPTION_SELECTION;
+		}
+
 		if (Statement.Type == EStatementType::ESTDialog)
 		{
-			Code += Statement.InternalStatement.empty()
-				? "," + WAIT_INTERACTION
-				: "," + WAIT_OPTION_SELECTION;
+			Code += "," + WAIT_INTERACTION;
 		}
 	}
 	return Code;
