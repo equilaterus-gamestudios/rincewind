@@ -79,6 +79,7 @@ statement:		dialog							{ ctx.InsertStatements($1);										}
 ;
 
 dialog:			"-" TEXT ":" TEXT				{ $$ = TStatements{ FStatement::CreateDialog(ctx.Resources, $2, $4) };			}
+|				"-" TEXT ":" TEXT condition		{ auto Dialog = FStatement::CreateDialog(ctx.Resources, $2, $4); $5.AddInternalStatement(Dialog); $$ = TStatements{ $5 }; }
 |				"-" TEXT ":" jump				{ $$ = TStatements{ FStatement::CreateDialogFromJump(ctx.Resources, $2, $4)};	}
 |				"-" TEXT ":" options			{ 
 													auto Dialog = FStatement::CreateDialog(ctx.Resources, $2, "", true); 

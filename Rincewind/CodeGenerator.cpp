@@ -4,6 +4,7 @@
 #include "Context.h"
 
 #define CRS(s) RincewindCode.push_back(s)
+#define REG(r) std::to_string(r)
 #define FUNCTION Statement.Parameters["Function"]
 #define LINE Statement.Parameters["Line"]
 #define LINE_EXISTS Statement.Parameters.count("Line")
@@ -24,13 +25,13 @@ CodeGenerator::CodeGenerator(Context* InContext)
 
 void CodeGenerator::GenerateDialogCode(FStatement& Statement, bool bWithText = true)
 {	
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TITLE));
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessTitle));
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FStringRegister), TITLE));
+	CRS(FRincewindStatement(RIS_ProcessTitle));
 	if (bWithText)
 	{
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TEXT));
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessText));
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_WaitInteraction));
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FStringRegister), TEXT));
+		CRS(FRincewindStatement(RIS_ProcessText));
+		CRS(FRincewindStatement(RIS_WaitInteraction));
 
 		/* If the dialog has a jump, like this: 
 		 * - Terry Pratchett:
@@ -39,44 +40,44 @@ void CodeGenerator::GenerateDialogCode(FStatement& Statement, bool bWithText = t
 		if (LINE_EXISTS)
 		{
 			LinesWithLabelProcessingPending.push_back(RincewindCode.size());
-			CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
-			CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJump));
+			CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), LINE));
+			CRS(FRincewindStatement(RIS_ProcessJump));
 		}		
 	}
 }
 
 void CodeGenerator::GenerateOptionCode(FStatement& Statement)
 {
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TEXT));
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FStringRegister), TEXT));
 	if (LINE_EXISTS)
 	{
 		LinesWithLabelProcessingPending.push_back(RincewindCode.size());
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), LINE));
 	}
 	else
 	{
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, NO_JUMP));
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), NO_JUMP));
 	}
 	
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessOption));
+	CRS(FRincewindStatement(RIS_ProcessOption));
 }
 
 void CodeGenerator::GenerateWaitForOptionCode()
 {
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_WaitOptionSelection));
+	CRS(FRincewindStatement(RIS_WaitOptionSelection));
 }
 
 void CodeGenerator::GenerateJumpCode(FStatement& Statement)
 {
 	LinesWithLabelProcessingPending.push_back(RincewindCode.size());
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJump));
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), LINE));	
+	CRS(FRincewindStatement(RIS_ProcessJump));
 }
 
 void CodeGenerator::GenerateCallCode(FStatement& Statement)
 {
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, FUNCTION));
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_CallFunction));
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), FUNCTION));
+	CRS(FRincewindStatement(RIS_CallFunction));
 }
 
 void CodeGenerator::ProcessLabel(FStatement& Statement)
@@ -93,6 +94,19 @@ void CodeGenerator::ProcessLabel(FStatement& Statement)
 	CodeContext->AddIdentifier(Statement.Name, Position);	
 }
 
+std::string CodeGenerator::GenerateStoreContext(std::string& Alias)
+{	
+	bool bLocal = Alias[0] == '_';	
+	if (bLocal)
+	{
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_BoolRegister), "0"));
+		return Alias.substr(1);
+	}
+	else
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_BoolRegister), "1"));
+
+	return Alias;	
+}
 
 void CodeGenerator::ProcesCondition(FStatement& Statement)
 {
@@ -101,46 +115,48 @@ void CodeGenerator::ProcesCondition(FStatement& Statement)
 	
 	if (SECOND_ALIAS_EXISTS)
 	{
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, SECOND_ALIAS));
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LoadInt));
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_MoveMemoryIntRegisterToIntRegister));
+		std::string Alias = GenerateStoreContext(SECOND_ALIAS);
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), Alias));
+		CRS(FRincewindStatement(RIS_LoadInt));
+		CRS(FRincewindStatement(RIS_MoveMemoryIntRegisterToIntRegister));
 	}
 	else
 	{
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LITERAL));
+		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), LITERAL));
 	}
 
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, ALIAS));
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LoadInt));
+	std::string Alias = GenerateStoreContext(ALIAS);
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), Alias));
+	CRS(FRincewindStatement(RIS_LoadInt));
 
 	switch (ConditionType)
 	{
 	case ECTGreater:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_GreatThan));
+		CRS(FRincewindStatement(RIS_GreatThan));
 		break;
 	case ECTLess:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LessThan));
+		CRS(FRincewindStatement(RIS_LessThan));
 		break;
 	case ECTGreaterOrEqual:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_GreatOrEqual));
+		CRS(FRincewindStatement(RIS_GreatOrEqual));
 		break;
 	case ECTLessOrEqual:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LessOrEqual));
+		CRS(FRincewindStatement(RIS_LessOrEqual));
 		break;
 	case ECTEqual:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_Equal));
+		CRS(FRincewindStatement(RIS_Equal));
 		break;
 	case ECTNotEqual:
-		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_NotEqual));
+		CRS(FRincewindStatement(RIS_NotEqual));
 		break;
 	default:
 		++CodeContext->Errors;
 		std::cout << "The condition type does not have a valid type.\n";
 	}
 
-	LinesWithLabelProcessingPending.push_back(RincewindCode.size());	
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
-	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJumpIf));
+	LinesWithLabelProcessingPending.push_back(RincewindCode.size());
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_IntRegister), LINE));
+	CRS(FRincewindStatement(RIS_ProcessJumpIf));
 	Statement.Name = LINE;
 
 	
@@ -193,23 +209,22 @@ void CodeGenerator::ProcessJumpsSecondPass()
 		
 		FRincewindStatement& Statement = RincewindCode[Line];
 		
-		if (Statement.Instruction != ERincewindInstructionSet::RIS_SetIntRegister)
+		if (Statement.Instruction != RIS_SetRegister && Statement.FirstParam == REG(RR_IntRegister))
 		{
 			++CodeContext->Errors;
 			std::cout << "Line " << Line << " is not suitable to perform a label processing.\n";
 			continue;
 		}
 
-		if (CodeContext->Identifiers.count(Statement.Value) == 0)
+		if (CodeContext->Identifiers.count(Statement.SecondParam) == 0)
 		{
 			++CodeContext->Errors;
-			std::cout << Statement.Value << " identifier does not have a definition.\n";
+			std::cout << Statement.SecondParam << " identifier does not have a definition.\n";
 			continue;
 		}
 
-		std::cout << Statement.Instruction << " " << Statement.Value << '\n';
-		Statement.Value = std::to_string(CodeContext->Identifiers[Statement.Value]);
-		std::cout << Statement.Instruction << " " << Statement.Value << '\n';
+		
+		Statement.SecondParam = std::to_string(CodeContext->Identifiers[Statement.SecondParam]);
 	}
 }
 

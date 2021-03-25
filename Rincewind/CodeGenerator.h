@@ -8,14 +8,22 @@
 
 #define NO_JUMP "-2"
 
+enum ERincewindRegisters {
+	RR_FStringRegister,
+	RR_FNameRegister,
+	RR_IntRegister,
+	RR_BoolRegister,
+
+	// Memory
+	RR_MemoryFStringRegister,
+	RR_MemoryFNameRegister,
+	RR_MemoryIntRegister
+};
+
 enum ERincewindInstructionSet {
 	RIS_None,
 	// Register Instructions
-	RIS_SetFStringRegister,				// mov SR X
-	RIS_SetFNameRegister,				// mov NR X
-	RIS_SetIntRegister,					// mov IR X
-	RIS_SetBoolRegister,				// mov BR X				pending
-	RIS_SetMemoryRegister,				// mov MR X				pending
+	RIS_SetRegister,					// load XR X
 
 	RIS_SetMemoryFStringRegister,		// load MSR X			pending    PROBABLY DO NOT NEED THIS
 	RIS_SetMemoryFNameRegister,			// load MNR X			pending	   PROBABLY DO NOT NEED THIS
@@ -25,7 +33,7 @@ enum ERincewindInstructionSet {
 
 	// Process Instructions
 	RIS_ProcessJump,					// jump IR
-	RIS_ProcessJumpIf,					// jump IR BR			pending
+	RIS_ProcessJumpIf,					// jump IR BR			
 	RIS_ProcessTitle,					// prc SR
 	RIS_ProcessText,					// prc SR
 	RIS_ProcessOption,					// prc SR IR
@@ -34,18 +42,18 @@ enum ERincewindInstructionSet {
 	RIS_CallFunction,					// call NR
 
 	// Conditional Instructions
-	RIS_LessThan,						// lt MIR IR			pending			if (MIR < IR)
-	RIS_LessOrEqual,					// le MIR IR			pending			if (MIR <= IR)
-	RIS_GreatThan,						// gt MIR IR			pending			if (MIR > IR)
-	RIS_GreatOrEqual,					// ge MIR IR			pending			if (MIR >= IR)
-	RIS_Equal,							// eq MIR IR			pending			if (MIR == IR)
-	RIS_NotEqual,						// neq MIR IR			pending			if (MIR != IR)
+	RIS_LessThan,						// lt MIR IR			
+	RIS_LessOrEqual,					// le MIR IR			
+	RIS_GreatThan,						// gt MIR IR			
+	RIS_GreatOrEqual,					// ge MIR IR			
+	RIS_Equal,							// eq MIR IR			
+	RIS_NotEqual,						// neq MIR IR			
 
 	// Memory Instruccions
-	RIS_LoadFString,					// load MSR				pending
-	RIS_LoadFName,						// load MNR				pending
-	RIS_LoadInt,						// load MIR				pending
-	RIS_LoadBool,						// load MBR				pending
+	RIS_LoadFString,					// load BR NR MSR		pending			BR true = global store
+	RIS_LoadFName,						// load BR NR MNR		pending			BR true = global store
+	RIS_LoadInt,						// load BR NR MIR		pending			BR true = global store
+	RIS_LoadBool,						// load BR NR MBR		pending			BR true = global store
 
 	RIS_StoreFString,					// store BR NR MSR 			pending	      BR true = global store
 	RIS_StoreFName,						// store BR NR MSR			pending	      BR true = global store
@@ -57,14 +65,15 @@ enum ERincewindInstructionSet {
 struct FRincewindStatement
 {
 	ERincewindInstructionSet Instruction;
-	std::string Value;
+	std::string FirstParam;
+	std::string SecondParam;
 
-	FRincewindStatement() : Instruction(ERincewindInstructionSet::RIS_None), Value("") {}
-	FRincewindStatement(ERincewindInstructionSet InInstruction, std::string InValue = "") : Instruction(InInstruction), Value(InValue) {}
+	FRincewindStatement() : Instruction(ERincewindInstructionSet::RIS_None), FirstParam(""), SecondParam("") {}
+	FRincewindStatement(ERincewindInstructionSet InInstruction, std::string InFirstParam = "", std::string InSecondParam = "") : Instruction(InInstruction), FirstParam(InFirstParam), SecondParam(InSecondParam) {}	
 
 	std::string ToString()
 	{		
-		return std::to_string(Instruction) + " " + Value;
+		return std::to_string(Instruction) + " " + FirstParam + " " + SecondParam;
 	}
 };
 
@@ -100,6 +109,8 @@ private:
 	void GenerateCallCode(FStatement& Statement);
 
 	void ProcessLabel(FStatement& Statement);
+
+	std::string GenerateStoreContext(std::string& Alias);
 
 	void ProcesCondition(FStatement& Statement);
 

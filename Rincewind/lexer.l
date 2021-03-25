@@ -23,27 +23,28 @@
 	#include "parser.h"
 	#include "Context.h"
 
-	char* TrimLabel(char* text)
+	char* TrimLabel(char* text, char value = ' ')
 	{
-		++text;
-		return text[0] == ' '
-			?	++text
-			:	text;
+		while (text[0] == value)
+		{
+			++text;
+		}
+		return text;
 	}
 %}
 
 digits		[0-9]+
-identifier	[$]?[a-zA-Z][a-zA-Z_0-9]*
+identifier	[$]?[a-zA-Z_][a-zA-Z_0-9]*
 label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
 text		[a-zA-Z][a-zA-Z ,.?!]*
 ignored		[ \n\t]
 
 %%
-{label}			{ return yy::parser::make_LABEL				(TrimLabel(yytext), ctx.loc);	}
+{label}			{ return yy::parser::make_LABEL				(TrimLabel(TrimLabel(yytext, '#')), ctx.loc);	}
 {identifier}	{ 
 					if (std::strcmp(yytext, "$call") == 0)
 						return yy::parser::make_CALL		(ctx.loc);	
-					return yy::parser::make_IDENTIFIER		(yytext, ctx.loc);				
+					return yy::parser::make_IDENTIFIER		(TrimLabel(TrimLabel(yytext, '$')), ctx.loc);				
 				}
 {digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), ctx.loc);				}
 {text}			{ return yy::parser::make_TEXT				(yytext, ctx.loc);				}
