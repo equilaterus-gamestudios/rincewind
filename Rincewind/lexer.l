@@ -33,16 +33,21 @@
 %}
 
 digits		[0-9]+
-identifier	[a-zA-Z][a-zA-Z_0-9]*
-label		#[ ]?[a-zA-Z][a-zA-Z_0-9]*
+identifier	[$]?[a-zA-Z][a-zA-Z_0-9]*
+label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
 text		[a-zA-Z][a-zA-Z ,.?!]*
 ignored		[ \n\t]
 
 %%
 {label}			{ return yy::parser::make_LABEL				(TrimLabel(yytext), ctx.loc);	}
-{identifier}	{ return yy::parser::make_IDENTIFIER		(yytext, ctx.loc);				}
-{digits}		{ return yy::parser::make_NUMCONST			(yytext, ctx.loc);				}
+{identifier}	{ 
+					if (std::strcmp(yytext, "$call") == 0)
+						return yy::parser::make_CALL		(ctx.loc);	
+					return yy::parser::make_IDENTIFIER		(yytext, ctx.loc);				
+				}
+{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), ctx.loc);				}
 {text}			{ return yy::parser::make_TEXT				(yytext, ctx.loc);				}
+"```"			{ return yy::parser::make_SCRIPT_BLOCK		(ctx.loc);						}
 "->"			{ return yy::parser::make_ARROW				(ctx.loc);						}
 "*"				{ return yy::parser::make_STAR				(ctx.loc);						}
 ":"				{ return yy::parser::make_COLON				(ctx.loc);						}	
@@ -57,6 +62,9 @@ ignored		[ \n\t]
 "["				{ return yy::parser::make_OPEN_BRACKET		(ctx.loc);						}	
 "]"				{ return yy::parser::make_CLOSE_BRACKET		(ctx.loc);						}	
 "#"				{ return yy::parser::make_HASH				(ctx.loc);						}
+">"				{ return yy::parser::make_GREATER			(ctx.loc);						}
+"<"				{ return yy::parser::make_LESS				(ctx.loc);						}
+"!"				{ return yy::parser::make_EXCLAMATION		(ctx.loc);						}
 {ignored}		
 <<EOF>>			{ return yy::parser::make_END				(ctx.loc);						}
 .				{ std::cout << "Unexpected Token: " << yytext << ", Line: " << yylineno << '\n';				}
