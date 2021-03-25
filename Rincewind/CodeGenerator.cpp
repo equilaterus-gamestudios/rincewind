@@ -3,124 +3,217 @@
 #include "CodeGenerator.h"
 #include "Context.h"
 
-
-const std::string CodeGenerator::WAIT_INTERACTION = "{\"FunctionName\": \"WaitInteraction\"}";
-const std::string CodeGenerator::WAIT_OPTION_SELECTION = "{\"FunctionName\": \"WaitOptionSelection\"}";
+#define CRS(s) RincewindCode.push_back(s)
+#define FUNCTION Statement.Parameters["Function"]
+#define LINE Statement.Parameters["Line"]
+#define LINE_EXISTS Statement.Parameters.count("Line")
+#define TITLE Statement.Parameters["Title"]
+#define TEXT Statement.Parameters["Text"]
+#define CONDITION_TYPE Statement.Parameters["ConditionType"]
+#define ALIAS Statement.Parameters["FirstAlias"]
+#define SECOND_ALIAS Statement.Parameters["SecondsAlias"]
+#define SECOND_ALIAS_EXISTS Statement.Parameters.count("SecondsAlias")
+#define LITERAL Statement.Parameters["Literal"]
 
 CodeGenerator::CodeGenerator(Context* InContext)
 {
 	CodeContext = InContext;
+	ConditionalSequence = 0;
 }
 
-std::string CodeGenerator::GenerateCode()
+
+void CodeGenerator::GenerateDialogCode(FStatement& Statement, bool bWithText = true)
+{	
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TITLE));
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessTitle));
+	if (bWithText)
+	{
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TEXT));
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessText));
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_WaitInteraction));
+
+		/* If the dialog has a jump, like this: 
+		 * - Terry Pratchett:
+         *   [Hello good sir, bye](#end)
+		 */
+		if (LINE_EXISTS)
+		{
+			LinesWithLabelProcessingPending.push_back(RincewindCode.size());
+			CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
+			CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJump));
+		}		
+	}
+}
+
+void CodeGenerator::GenerateOptionCode(FStatement& Statement)
 {
-	return "{\"Statements\":[" + GenerateCode(CodeContext->Statements) + "]}";
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFStringRegister, TEXT));
+	if (LINE_EXISTS)
+	{
+		LinesWithLabelProcessingPending.push_back(RincewindCode.size());
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
+	}
+	else
+	{
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, NO_JUMP));
+	}
+	
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessOption));
 }
 
-
-void CodeGenerator::ProcessJumpStatements()
+void CodeGenerator::GenerateWaitForOptionCode()
 {
-	ProcessJumpStatements(nullptr, CodeContext->Statements);	
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_WaitOptionSelection));
 }
 
-void CodeGenerator::ProcessJumpStatements(SStatement* ParentStatement, TStatements& Statements)
+void CodeGenerator::GenerateJumpCode(FStatement& Statement)
+{
+	LinesWithLabelProcessingPending.push_back(RincewindCode.size());
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJump));
+}
+
+void CodeGenerator::GenerateCallCode(FStatement& Statement)
+{
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, FUNCTION));
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_CallFunction));
+}
+
+void CodeGenerator::ProcessLabel(FStatement& Statement)
+{
+	std::string Label = Statement.Name;	
+	if (CodeContext->Identifiers.count(Label))
+	{
+		++CodeContext->Errors;
+		std::cout << Label << " identifier already exists.\n";
+		return;
+	}
+
+	int Position = RincewindCode.size();
+	CodeContext->AddIdentifier(Statement.Name, Position);	
+}
+
+
+void CodeGenerator::ProcesCondition(FStatement& Statement)
+{
+	Statement.AddParameter("Line", "COND" + std::to_string(ConditionalSequence++));
+	EConditionalType ConditionType = EConditionalType(std::stoi(CONDITION_TYPE));
+	
+	if (SECOND_ALIAS_EXISTS)
+	{
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, SECOND_ALIAS));
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LoadInt));
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_MoveMemoryIntRegisterToIntRegister));
+	}
+	else
+	{
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LITERAL));
+	}
+
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetFNameRegister, ALIAS));
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LoadInt));
+
+	switch (ConditionType)
+	{
+	case ECTGreater:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_GreatThan));
+		break;
+	case ECTLess:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LessThan));
+		break;
+	case ECTGreaterOrEqual:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_GreatOrEqual));
+		break;
+	case ECTLessOrEqual:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_LessOrEqual));
+		break;
+	case ECTEqual:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_Equal));
+		break;
+	case ECTNotEqual:
+		CRS(FRincewindStatement(ERincewindInstructionSet::RIS_NotEqual));
+		break;
+	default:
+		++CodeContext->Errors;
+		std::cout << "The condition type does not have a valid type.\n";
+	}
+
+	LinesWithLabelProcessingPending.push_back(RincewindCode.size());	
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_SetIntRegister, LINE));
+	CRS(FRincewindStatement(ERincewindInstructionSet::RIS_ProcessJumpIf));
+	Statement.Name = LINE;
+
+	
+}
+
+void CodeGenerator::ProcesFStatement(FStatement& Statement)
+{
+	switch (Statement.Type)
+	{
+	case EStatementType::ESTDialog:
+		GenerateDialogCode(Statement); break;
+	case EStatementType::ESTDialogWithOptions:
+		GenerateDialogCode(Statement, false); break;	
+	case EStatementType::ESTOption:
+		GenerateOptionCode(Statement); break;
+	case EStatementType::ESTJump:
+		GenerateJumpCode(Statement); break;
+	case EStatementType::ESTCall:	
+		GenerateCallCode(Statement); break;
+	case EStatementType::ESTLabel:
+		ProcessLabel(Statement); break;
+	case EStatementType::ESTCondition:
+		ProcesCondition(Statement);
+		GenerateCode(Statement.InternalStatement);
+		ProcessLabel(Statement);
+		break;
+	case EStatementType::ESTWaitOptionSelection:
+		GenerateWaitForOptionCode(); break;
+	default:
+		++CodeContext->Errors;
+		std::cout << "The statement does not have a valid type.\n";
+		break;
+	}
+}
+
+
+
+void CodeGenerator::GenerateCode(TStatements& Statements)
 {
 	for (auto& Statement : Statements)
 	{
-		if (Statement.Type == EStatementType::ESTJump)
-		{
-			std::string Label = Statement.Parameters["Line"];
-			if (CodeContext->Identifiers.count(Label) == 0)
-			{
-				std::cout << Label << " identifier does not have a definition.\n";
-				return;
-			}
-			int Row = CodeContext->Identifiers[Label];
-
-			if (ParentStatement && (ParentStatement->Type == EStatementType::ESTOption || ParentStatement->Type == EStatementType::ESTDialog))
-			{
-				ParentStatement->AddParameter("JumpTo", std::to_string(Row));
-				ParentStatement->Parameters["Text"] = Statement.Parameters["Text"];
-				Statement.bByPass = true;
-			}
-			else
-			{
-				Statement.Parameters["Line"] = std::to_string(Row);
-			}
-		}
-		
-		if (!Statement.InternalStatement.empty())
-		{
-			ProcessJumpStatements(&Statement, Statement.InternalStatement);
-		}
+		ProcesFStatement(Statement);		
 	}
 }
 
-std::string CodeGenerator::GenerateCode(TStatements& Statemets)
+void CodeGenerator::ProcessJumpsSecondPass()
 {
-	std::string Code = "";
-	for (auto& Statement : Statemets)
+	for (auto& Line : LinesWithLabelProcessingPending)
 	{
-		if (Statement.bByPass)
+		
+		FRincewindStatement& Statement = RincewindCode[Line];
+		
+		if (Statement.Instruction != ERincewindInstructionSet::RIS_SetIntRegister)
 		{
+			++CodeContext->Errors;
+			std::cout << "Line " << Line << " is not suitable to perform a label processing.\n";
 			continue;
 		}
 
-		if (Code != "")
+		if (CodeContext->Identifiers.count(Statement.Value) == 0)
 		{
-			Code += ",";
+			++CodeContext->Errors;
+			std::cout << Statement.Value << " identifier does not have a definition.\n";
+			continue;
 		}
 
-		Code += GenerateCodeForStatement(Statement);
-
-		if (!Statement.InternalStatement.empty())
-		{
-			std::string InternalCode = GenerateCode(Statement.InternalStatement);
-			if (InternalCode != "")
-			{
-				Code += "," + InternalCode;
-			}
-		}
-
-		if (Statement.Type == EStatementType::ESTDialogWithOptions)
-		{
-			Code += "," + WAIT_OPTION_SELECTION;
-		}
-
-		if (Statement.Type == EStatementType::ESTDialog)
-		{
-			Code += "," + WAIT_INTERACTION;
-		}
+		std::cout << Statement.Instruction << " " << Statement.Value << '\n';
+		Statement.Value = std::to_string(CodeContext->Identifiers[Statement.Value]);
+		std::cout << Statement.Instruction << " " << Statement.Value << '\n';
 	}
-	return Code;
 }
 
-std::string CodeGenerator::GetFunctionName(std::string FunctionName)
+void CodeGenerator::GenerateCode()
 {
-	return "\"FunctionName\":\"" + FunctionName + "\"";
-}
-
-std::string CodeGenerator::GetParameters(TParameters& Parameters)
-{
-	std::string Code = "\"Parameters\":{";
-	std::string CodeParameters = "";
-	for (auto& Parameter : Parameters)
-	{
-		if (CodeParameters != "")
-		{
-			CodeParameters += ",";
-		}
-		CodeParameters += "\"" + Parameter.first + "\":\"" + Parameter.second + "\"";
-	}
-
-	return Code + CodeParameters + "}";
-}
-
-
-std::string CodeGenerator::GenerateCodeForStatement(SStatement& Statement)
-{
-	std::string Code = GetFunctionName(Statement.Name) + ",";	
-	Code += GetParameters(Statement.Parameters);
-
-	return "{" + Code + "}";
+	GenerateCode(CodeContext->Statements);
 }

@@ -191,6 +191,7 @@
     <ClInclude Include="Context.h" />
     <ClInclude Include="location.hh" />
     <ClInclude Include="parser.h" />
+    <ClInclude Include="Resources.h" />
     <ClInclude Include="Types.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

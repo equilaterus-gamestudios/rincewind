@@ -1,27 +1,32 @@
 #pragma once
 #include <string>
 #include <map>
+#include <set>
 #include <vector>
 #include <iostream>
 #include "parser.h"
 #include "location.hh"
 #include "Types.h"
+#include "Resources.h"
 
 #define YY_DECL \
   yy::parser::symbol_type yylex (Context& ctx)
 // ... and declare it for the parser's sake.
 YY_DECL;
 
+
 class Context
 {
+
+    void PrintStatements(std::vector<FStatement>& Statements);
 public:
     Context();
-
-    int CurrentRow;
-
-	std::vector<SStatement> Statements;
+        
+	std::vector<FStatement> Statements;
 
     std::map<std::string, int> Identifiers;
+
+    FResources Resources;
 
     void Print();
 
@@ -36,5 +41,12 @@ public:
 
     yy::location loc;
 
+    int Consecutive;
+
     int Errors;
+
+    void InsertStatements(std::vector<FStatement> InStatements);
+
+    void PrintStatements();
+    
 };

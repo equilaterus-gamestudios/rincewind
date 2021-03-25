@@ -24,11 +24,35 @@ int main(int argc, char** argv)
     }
     
     CodeGenerator Generator = CodeGenerator(&ctx);
-    Generator.ProcessJumpStatements();
-    std::string CodeGenerated = Generator.GenerateCode();
+    
+    //ctx.PrintStatements();
+    // Generate code
+    Generator.GenerateCode();
+    Generator.ProcessJumpsSecondPass();
 
-    std::ofstream o("dialogtest.dialog");
-    o << CodeGenerated;
+    if (ctx.Errors != 0)
+    {
+        std::cout << "Errors were found while generating the code. Report this error.\n";
+
+        return -1;
+    }
+
+    std::ofstream OutputCode("dialogtest.dialog");
+    for (auto& Statement : Generator.RincewindCode)
+    {
+        OutputCode << Statement.ToString() << '\n';
+    }
+    OutputCode.close();
+
+    //Generate resources
+    std::ofstream OutputResources("dialogtest.csv");
+
+    OutputResources << "Key,SourceString,Comment\n";
+
+    for (auto& Resource : ctx.Resources.Texts)
+    {
+        OutputResources << "\"" << Resource.first << "\",\"" << Resource.second << "\",\"\"\n";
+    }
 
     std::cout << "Compilation was successfull\n";
     std::cout << "File has been generated\n";

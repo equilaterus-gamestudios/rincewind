@@ -30,7 +30,10 @@
 				IDENTIFIER
 				NUMCONST
 				TEXT
+				
 %token
+	CALL			"call"
+	SCRIPT_BLOCK	"```"
 	ARROW			"->"
 	STAR			"*"
 	COLON			":"
@@ -45,49 +48,82 @@
 	OPEN_BRACKET	"["
 	CLOSE_BRACKET	"]"
 	HASH			"#"
+	GREATER			">"
+	LESS			"<"
+	EXCLAMATION		"!"
 
 %type<std::string>	LABEL	
 %type<std::string>	IDENTIFIER
-%type<std::string>	NUMCONST
+%type<int>	NUMCONST
 %type<std::string>	TEXT
+%type<EConditionalType> condition_sign
 
-%type<SStatement> dialog option command jump
-%type<TStatements> options
+%type<FStatement>  script_statement condition jump option
+%type<TStatements> options script script_body dialog 
 
-%start script
+%start screenplay
 
 %%
-script:			statements
+screenplay:		LABEL statements LABEL
 ;
 
 statements:		statements statement
 |				%empty
 ;
 
-statement:		dialog							{ ctx.Statements.push_back($1); ctx.CurrentRow += 2;	}
-|				command							{ ctx.Statements.push_back($1); ++ctx.CurrentRow;		}
-|				jump							{ ctx.Statements.push_back($1); ++ctx.CurrentRow;		}
-|				LABEL							{ ctx.AddIdentifier($1, ctx.CurrentRow);				}
+statement:		dialog							{ ctx.InsertStatements($1);										}
+|				jump							{ ctx.Statements.push_back($1);									}
+|				script							{ ctx.InsertStatements($1);										}
+|				LABEL							{ ctx.Statements.push_back(FStatement::CreateLabel($1));		}
 |				error
 ;
 
-dialog:			"-" TEXT ":" TEXT				{ $$ = SStatement::CreateDialog($2, $4); }
-|				"-" TEXT ":" jump				{ auto Dialog = SStatement::CreateDialog($2, ""); Dialog.AddInternalStatement($4); $$ = Dialog;  }
-|				"-" TEXT ":" options			{ auto Dialog = SStatement::CreateDialog($2, "", true); Dialog.InternalStatement = $4; $$ = Dialog; }
+dialog:			"-" TEXT ":" TEXT				{ $$ = TStatements{ FStatement::CreateDialog(ctx.Resources, $2, $4) };			}
+|				"-" TEXT ":" jump				{ $$ = TStatements{ FStatement::CreateDialogFromJump(ctx.Resources, $2, $4)};	}
+|				"-" TEXT ":" options			{ 
+													auto Dialog = FStatement::CreateDialog(ctx.Resources, $2, "", true); 
+													FStatement::AtBegining(Dialog, $4); 
+													auto Wait = FStatement::CreateWaitOptionSelection(); 
+													FStatement::AtEnd(Wait, $4); 
+													$$ = $4;		
+												}
 ;
 
-options:		options option					{ $1.push_back($2); $$ = $1;}
-|				option							{ auto ListStatements = TStatements(); ListStatements.push_back($1); $$ = ListStatements; }
+options:		options option					{ FStatement::AtEnd($2, $1); $$ = $1; }
+|				option							{ $$ = TStatements{$1};	}
 ;
 
-option:			"*" jump						{ auto Option = SStatement::CreateOption(""); Option.AddInternalStatement($2); $$ = Option; ++ctx.CurrentRow; }
-|				"*" TEXT						{ $$ = SStatement::CreateOption($2); ++ctx.CurrentRow; }
+option:			"*" jump						{ $$ = FStatement::CreateOptionFromJump(ctx.Resources, $2);	}
+|				"*" TEXT						{ $$ = FStatement::CreateOption(ctx.Resources, $2);			}
 ;
 
-command:		"$" IDENTIFIER "=" NUMCONST		{ $$ = SStatement::CreateCommand($2, $4); }
+
+jump:			"[" TEXT "]" "(" LABEL ")"				{ $$ = FStatement::CreateJump($2, $5); }
+|				"[" TEXT "]" "(" LABEL ")" condition	{ auto Jump = FStatement::CreateJump($2, $5); $7.AddInternalStatement(Jump); $$ = $7; }
 ;
 
-jump:			"[" TEXT "]" "(" LABEL ")"		{ $$ = SStatement::CreateJump($2, $5); }
+script:			"```" script_body "```"			{ $$ = $2; }
+;
+
+script_body:	script_body script_statement	{ $1.push_back($2); $$ = $1; }
+|				script_statement				{ auto Script = TStatements(); Script.push_back($1); $$ = Script; }	
+;
+
+script_statement:	CALL IDENTIFIER				{ $$ = FStatement::CreateCall($2); }
+;
+
+condition:		"|" IDENTIFIER									{ $$ = FStatement::CreateCondition(EConditionalType::ECTEqual, $2, 1); }
+|				"|" "!" IDENTIFIER								{ $$ = FStatement::CreateCondition(EConditionalType::ECTEqual, $3, 0); }
+|				"|" IDENTIFIER condition_sign NUMCONST			{ $$ = FStatement::CreateCondition($3, $2, $4); }
+|				"|" IDENTIFIER condition_sign IDENTIFIER		{ $$ = FStatement::CreateCondition($3, $2, $4); }
+;
+
+condition_sign:	">"								{ $$ = EConditionalType::ECTGreater; }
+|				"<"								{ $$ = EConditionalType::ECTLess; }
+|				">" "="							{ $$ = EConditionalType::ECTGreaterOrEqual; }
+|				"<" "="							{ $$ = EConditionalType::ECTLessOrEqual; }
+|				"="								{ $$ = EConditionalType::ECTEqual; }
+|				"!" "="							{ $$ = EConditionalType::ECTNotEqual; }
 ;
 %%
 
