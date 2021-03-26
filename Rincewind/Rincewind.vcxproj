@@ -70,16 +70,20 @@
   </ImportGroup>
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
-    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files\ReFlex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LinkIncremental>true</LinkIncremental>
+    <IncludePath>C:\Program Files\ReFlex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
-    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files\ReFlex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LinkIncremental>false</LinkIncremental>
+    <IncludePath>C:\Program Files\ReFlex\include;$(IncludePath)</IncludePath>
+    <LibraryPath>$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -161,34 +165,47 @@
   <ItemGroup>
     <CustomBuild Include="lexer.l">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">win_flex --wincompat -o %(Filename).cpp %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">reflex −−header-file −−flex --bison --reentrant −−bison-complete −−bison-locations %(Filename).l</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generate lexical analyzer</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).cpp;</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">lex.yy.h; lex.yy.cpp</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">parser.y</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">win_flex --wincompat -o %(Filename).cpp %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">reflex −−header-file −−flex --bison --reentrant −−bison-complete −−bison-locations %(Filename).l</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generate lexical analyzer</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).cpp;</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">lex.yy.h; lex.yy.cpp</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">parser.y</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">win_flex --wincompat -o %(Filename).cpp %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">reflex −−header-file −−flex --bison --reentrant −−bison-complete −−bison-locations %(Filename).l</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Generate lexical analyzer</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).cpp;</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">lex.yy.h; lex.yy.cpp</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">parser.y</AdditionalInputs>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">win_flex --wincompat -o %(Filename).cpp %(Identity)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">reflex −−header-file −−flex --bison --reentrant −−bison-complete −−bison-locations %(Filename).l</Command>
       <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Generate lexical analyzer</Message>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).cpp;</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">lex.yy.h; lex.yy.cpp</Outputs>
       <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">parser.y</AdditionalInputs>
     </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CodeGenerator.cpp" />
     <ClCompile Include="Context.cpp" />
-    <ClCompile Include="lexer.cpp" />
+    <ClCompile Include="lex.yy.cpp" />
+    <ClCompile Include="lib\convert.cpp" />
+    <ClCompile Include="lib\debug.cpp" />
+    <ClCompile Include="lib\error.cpp" />
+    <ClCompile Include="lib\input.cpp" />
+    <ClCompile Include="lib\matcher.cpp" />
+    <ClCompile Include="lib\pattern.cpp" />
+    <ClCompile Include="lib\posix.cpp" />
+    <ClCompile Include="lib\unicode.cpp" />
+    <ClCompile Include="lib\utf8.cpp" />
     <ClCompile Include="parser.cpp" />
     <ClCompile Include="Source.cpp" />
+    <ClCompile Include="unicode\block_scripts.cpp" />
+    <ClCompile Include="unicode\language_scripts.cpp" />
+    <ClCompile Include="unicode\letter_scripts.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="CodeGenerator.h" />
     <ClInclude Include="Context.h" />
+    <ClInclude Include="lex.yy.h" />
     <ClInclude Include="location.hh" />
     <ClInclude Include="parser.h" />
     <ClInclude Include="Resources.h" />
