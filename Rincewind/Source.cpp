@@ -7,13 +7,26 @@
 
 int main(int argc, char** argv)
 {
-    std::string filename = "dialogtest.md";
-    FILE* a = fopen(filename.c_str(), "r");
+    if (argc < 2)
+    {
+        std::cout << "Please, enter the input file and the output name\n";
+        return -1;
+    }
+
+    char* Filename = argv[1];
+    char* OutputFileName = argv[2];
+
+    FILE* File = fopen(Filename, "r");
+    if (File == NULL)
+    {
+        std::cout << "Please, enter the existing input file\n";
+        return -1;
+    }
 
     Context ctx = Context();
 
-    yy::Lexer lexer = yy::Lexer(&ctx, a, NULL);
-    lexer.filename = filename;
+    yy::Lexer lexer = yy::Lexer(&ctx, File, NULL);
+    lexer.filename = Filename;
     
     yy::parser parser(lexer);
     parser.parse();
@@ -39,7 +52,16 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    std::ofstream OutputCode("dialogtest.dialog");
+    const char* CodeExtention = ".dialog";
+    const char* ResourcesExtention = ".csv";
+
+    char* OutputCodeFile = (char*)malloc(strlen(OutputFileName) + strlen(CodeExtention) + 1); OutputCodeFile[0] = '\0';
+    char* ResourcesFile = (char*)malloc(strlen(OutputFileName) + strlen(ResourcesExtention) + 1); ResourcesFile[0] = '\0';
+
+    strcat(OutputCodeFile, OutputFileName); strcat(OutputCodeFile, CodeExtention);
+    strcat(ResourcesFile, OutputFileName); strcat(ResourcesFile, ResourcesExtention);
+
+    std::ofstream OutputCode(OutputCodeFile);
     for (auto& Statement : Generator.RincewindCode)
     {
         OutputCode << Statement.ToString() << '\n';
@@ -47,7 +69,7 @@ int main(int argc, char** argv)
     OutputCode.close();
 
     //Generate resources
-    std::ofstream OutputResources("dialogtest.csv");
+    std::ofstream OutputResources(ResourcesFile);
 
     OutputResources << "Key,SourceString,Comment\n";
 
