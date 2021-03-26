@@ -1,6 +1,6 @@
 # Rincewind compiler
 
-Rincewind is a magic machine built by druid, it can with anyone with any language. This compiler pronounce the enchanted words that allows you to talk with this machine without being evaporated. Say something wisdom the elders are waiting.
+Rincewind is a magic machine built by druids, it can talk with anyone in any language. This compiler pronounce the enchanted words that allows you to talk with this machine without being evaporated. Say something wise, the elders are waiting.
 
 
 ## How to perform the invocation ritual
