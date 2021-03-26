@@ -1,19 +1,21 @@
+#pragma once
 #include <fstream>
 #include <iostream>
 #include "Context.h"
 #include "CodeGenerator.h"
-#include "parser.h"
-
-extern FILE* yyin;
+#include "lex.yy.h"
 
 int main(int argc, char** argv)
 {
     std::string filename = "dialogtest.md";
     FILE* a = fopen(filename.c_str(), "r");
-    yyin = fopen(filename.c_str(), "r");
+
     Context ctx = Context();
+
+    yy::Lexer lexer = yy::Lexer(&ctx, a, NULL);
+    lexer.filename = filename;
     
-    yy::parser parser(ctx);    
+    yy::parser parser(lexer);
     parser.parse();
 
     if (ctx.Errors != 0)
@@ -25,7 +27,7 @@ int main(int argc, char** argv)
     
     CodeGenerator Generator = CodeGenerator(&ctx);
     
-    //ctx.PrintStatements();
+    // ctx.PrintStatements();
     // Generate code
     Generator.GenerateCode();
     Generator.ProcessJumpsSecondPass();
@@ -56,6 +58,6 @@ int main(int argc, char** argv)
 
     std::cout << "Compilation was successfull\n";
     std::cout << "File has been generated\n";
-
+    
     return 0;
 }
