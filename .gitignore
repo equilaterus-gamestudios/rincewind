@@ -45,3 +45,12 @@ bld/
 
 # Visual Studio 2015 cache/options directory
 .vs/
+
+# Library
+Rincewind/lib
+Rincewind/unicode
+
+# Generated files
+Rincewind/lex.yy.*
+Rincewind/parser.*
+Rincewind/location.hh
