@@ -16,6 +16,9 @@
     <Filter Include="Generated Files">
       <UniqueIdentifier>{4f55d424-ff99-4859-999c-debf06680b53}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\reflex">
+      <UniqueIdentifier>{e75a0e37-3863-4a97-afca-fa908328e624}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="parser.y">
@@ -29,9 +32,6 @@
     <ClCompile Include="Source.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="lexer.cpp">
-      <Filter>Generated Files</Filter>
-    </ClCompile>
     <ClCompile Include="parser.cpp">
       <Filter>Generated Files</Filter>
     </ClCompile>
@@ -40,6 +40,45 @@
     </ClCompile>
     <ClCompile Include="CodeGenerator.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lex.yy.cpp">
+      <Filter>Generated Files</Filter>
+    </ClCompile>
+    <ClCompile Include="unicode\block_scripts.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\convert.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\debug.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\error.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\input.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="unicode\language_scripts.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="unicode\letter_scripts.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\matcher.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\pattern.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\posix.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\unicode.cpp">
+      <Filter>Source Files\reflex</Filter>
+    </ClCompile>
+    <ClCompile Include="lib\utf8.cpp">
+      <Filter>Source Files\reflex</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -60,6 +99,9 @@
     </ClInclude>
     <ClInclude Include="Resources.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lex.yy.h">
+      <Filter>Generated Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
