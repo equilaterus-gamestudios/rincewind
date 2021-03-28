@@ -72,7 +72,7 @@ public:
 digits		[0-9]+
 identifier	[$][_]?[a-zA-Z][a-zA-Z_0-9]*
 label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
-full_text	[a-zA-Z ',.?!$%#*]+
+full_text	"`"[a-zA-Z0-9 ',.?!$%#*]+"`"
 text		[a-zA-Z',.?!][a-zA-Z ',.?!]+
 ignored		[ \n\t\r]
 
@@ -84,7 +84,7 @@ ignored		[ \n\t\r]
 					return yy::parser::make_IDENTIFIER		(TrimLeft(TrimLeft(yytext, '$')), Ctx->loc);				
 				}
 {digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->loc);						}
-`{full_text}`	{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->loc);	}
+{full_text}		{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->loc);	}
 "```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->loc);											}
 "*"				{ return yy::parser::make_STAR				(Ctx->loc);											}
 ":"				{ return yy::parser::make_COLON				(Ctx->loc);											}	

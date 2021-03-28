@@ -1,7 +1,9 @@
 #include <iostream>
-
+#include <algorithm>
 #include "CodeGenerator.h"
 #include "Context.h"
+
+#define REPLACE_SPACE(s) std::replace( s.begin(), s.end(), ' ', '@')
 
 #define CRS(s) RincewindCode.push_back(s)
 #define REG(r) std::to_string(r)
@@ -76,7 +78,9 @@ void CodeGenerator::GenerateJumpCode(FStatement& Statement)
 
 void CodeGenerator::GenerateCallCode(FStatement& Statement)
 {
-	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), FUNCTION));
+	std::string Function = FUNCTION; 
+	REPLACE_SPACE(Function);
+	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FStringRegister), Function));
 	CRS(FRincewindStatement(RIS_CallFunction));
 }
 

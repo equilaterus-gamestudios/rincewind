@@ -117,7 +117,7 @@ script_body:	script_body script_statement	{ $1.push_back($2); $$ = $1; }
 |				script_statement				{ auto Script = TStatements(); Script.push_back($1); $$ = Script; }	
 ;
 
-script_statement:	CALL IDENTIFIER				{ $$ = FStatement::CreateCall($2); }
+script_statement:	CALL TEXT					{ $$ = FStatement::CreateCall($2); }
 ;
 
 condition:		"|" IDENTIFIER									{ $$ = FStatement::CreateCondition(EConditionalType::ECTEqual, $2, 1); }
