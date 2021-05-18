@@ -7,16 +7,20 @@
 
 int main(int argc, char** argv)
 {
-    if (argc < 2)
+    if (argc < 3)
     {
-        std::cout << "Please, enter the input file and the output name\n";
+        std::cout << "Please, enter the path, input file and the output name\n";
         return -1;
     }
 
-    char* Filename = argv[1];
-    char* OutputFileName = argv[2];
+    char* Path = argv[1];
+    char* Filename = argv[2];
+    char* OutputFileName = argv[3];
 
-    FILE* File = fopen(Filename, "r");
+    char* InputFile = (char*)malloc(strlen(Path) + strlen(Filename) + 1); InputFile[0] = '\0';
+    strcat(InputFile, Path); strcat(InputFile, Filename);
+
+    FILE* File = fopen(InputFile, "r");
     if (File == NULL)
     {
         std::cout << "Please, enter the existing input file\n";
@@ -55,11 +59,11 @@ int main(int argc, char** argv)
     const char* CodeExtention = ".dialog";
     const char* ResourcesExtention = ".csv";
 
-    char* OutputCodeFile = (char*)malloc(strlen(OutputFileName) + strlen(CodeExtention) + 1); OutputCodeFile[0] = '\0';
-    char* ResourcesFile = (char*)malloc(strlen(OutputFileName) + strlen(ResourcesExtention) + 1); ResourcesFile[0] = '\0';
+    char* OutputCodeFile = (char*)malloc(strlen(Path) + strlen(OutputFileName) + strlen(CodeExtention) + 1); OutputCodeFile[0] = '\0';
+    char* ResourcesFile = (char*)malloc(strlen(Path) + strlen(OutputFileName) + strlen(ResourcesExtention) + 1); ResourcesFile[0] = '\0';
 
-    strcat(OutputCodeFile, OutputFileName); strcat(OutputCodeFile, CodeExtention);
-    strcat(ResourcesFile, OutputFileName); strcat(ResourcesFile, ResourcesExtention);
+    strcat(OutputCodeFile, Path); strcat(OutputCodeFile, OutputFileName); strcat(OutputCodeFile, CodeExtention);
+    strcat(ResourcesFile, Path); strcat(ResourcesFile, OutputFileName); strcat(ResourcesFile, ResourcesExtention);
 
     std::ofstream OutputCode(OutputCodeFile);
     for (auto& Statement : Generator.RincewindCode)
