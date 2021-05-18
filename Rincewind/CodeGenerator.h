@@ -9,15 +9,15 @@
 #define NO_JUMP "-2"
 
 enum ERincewindRegisters {
-	RR_FStringRegister,
-	RR_FNameRegister,
-	RR_IntRegister,
-	RR_BoolRegister,
+	RR_FStringRegister,					// SR
+	RR_FNameRegister,					// NR
+	RR_IntRegister,						// IR
+	RR_BoolRegister,					// BR
 
 	// Memory
-	RR_MemoryFStringRegister,
-	RR_MemoryFNameRegister,
-	RR_MemoryIntRegister
+	RR_MemoryFStringRegister,			// MSR
+	RR_MemoryFNameRegister,				// MNR
+	RR_MemoryIntRegister				// MIR
 };
 
 enum ERincewindInstructionSet {
