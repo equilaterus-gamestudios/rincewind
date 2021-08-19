@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 
     if (ctx.Errors != 0)
     {
-        std::cout << "Errors were found while generating the code. Report this error.\n";
+        std::cout << "Errors were found while generating the code.\n";
 
         return -1;
     }
@@ -82,8 +82,8 @@ int main(int argc, char** argv)
         OutputResources << "\"" << Resource.first << "\",\"" << Resource.second << "\",\"\"\n";
     }
 
-    std::cout << "Compilation was successfull\n";
-    std::cout << "File has been generated\n";
+    std::cout << "Compilation was successful\n";
+    std::cout << "Output has been generated\n";
     
     return 0;
 }
