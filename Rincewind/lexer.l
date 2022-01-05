@@ -73,7 +73,7 @@ digits		[0-9]+
 identifier	[$][_]?[a-zA-Z][a-zA-Z_0-9]*
 label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
 full_text	"`"[a-zA-Z0-9 ',.?!$%#*]+"`"
-text		[a-zA-Zñáéíóú',.¿?¡!][a-zA-Z ñáéíóú',.?!]+
+text		[a-zA-Zñáéíóú',.¿?¡!][a-zA-Z ñáéíóú',.¿?¡!]+
 ignored		[ \n\t\r]
 
 %%
