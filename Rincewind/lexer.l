@@ -72,8 +72,9 @@ public:
 digits		[0-9]+
 identifier	[$][_]?[a-zA-Z][a-zA-Z_0-9]*
 label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
-full_text	"`"[a-zA-Z0-9 ',.?!$%#*]+"`"
-text		[a-zA-Zñáéíóú',.¿?¡!][a-zA-Z ñáéíóú',.¿?¡!]+
+text		[a-zA-Z0-9ñáéíóú',.¿?¡!{}][a-zA-Z0-9 ñáéíóú',.¿?¡!{}]+
+full_text	"`"{text}"`"
+
 ignored		[ \n\t\r]
 
 %%
@@ -83,7 +84,6 @@ ignored		[ \n\t\r]
 						return yy::parser::make_CALL		(Ctx->loc);	
 					return yy::parser::make_IDENTIFIER		(TrimLeft(TrimLeft(yytext, '$')), Ctx->loc);				
 				}
-{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->loc);						}
 {full_text}		{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->loc);	}
 "```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->loc);											}
 "*"				{ return yy::parser::make_STAR				(Ctx->loc);											}
@@ -99,6 +99,7 @@ ignored		[ \n\t\r]
 ">"				{ return yy::parser::make_GREATER			(Ctx->loc);											}
 "<"				{ return yy::parser::make_LESS				(Ctx->loc);											}
 "~"				{ return yy::parser::make_NOT				(Ctx->loc);											}
+{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->loc);						}
 {text}			{ return yy::parser::make_TEXT				(yytext, Ctx->loc);									}
 {ignored}		{}
 <<EOF>>			{ return yy::parser::make_END				(Ctx->loc);											}
