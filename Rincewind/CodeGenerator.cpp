@@ -112,7 +112,7 @@ std::string CodeGenerator::GenerateStoreContext(std::string& Alias)
 	return Alias;	
 }
 
-void CodeGenerator::ProcesCondition(FStatement& Statement)
+void CodeGenerator::GenerateCondition(FStatement& Statement)
 {
 	Statement.AddParameter("Line", "COND" + std::to_string(ConditionalSequence++));
 	EConditionalType ConditionType = EConditionalType(std::stoi(CONDITION_TYPE));
@@ -120,9 +120,9 @@ void CodeGenerator::ProcesCondition(FStatement& Statement)
 	if (SECOND_ALIAS_EXISTS)
 	{
 		std::string Alias = GenerateStoreContext(SECOND_ALIAS);
-		CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), Alias));
-		CRS(FRincewindStatement(RIS_LoadInt));
-		CRS(FRincewindStatement(RIS_MoveMemoryIntRegisterToIntRegister));
+		//CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), Alias));
+		CRS(FRincewindStatement(RIS_LoadRegister, REG(RR_IntRegister), Alias));
+		CRS(FRincewindStatement(RIS_MoveRegister, REG(RR_IntRegister), REG(RR_TemporalIntRegister)));
 	}
 	else
 	{
@@ -131,7 +131,8 @@ void CodeGenerator::ProcesCondition(FStatement& Statement)
 
 	std::string Alias = GenerateStoreContext(ALIAS);
 	CRS(FRincewindStatement(RIS_SetRegister, REG(RR_FNameRegister), Alias));
-	CRS(FRincewindStatement(RIS_LoadInt));
+	//CRS(FRincewindStatement(RIS_LoadInt));
+	CRS(FRincewindStatement(RIS_LoadRegister, REG(RR_IntRegister), Alias));
 
 	switch (ConditionType)
 	{
@@ -183,7 +184,7 @@ void CodeGenerator::ProcesFStatement(FStatement& Statement)
 	case EStatementType::ESTLabel:
 		ProcessLabel(Statement); break;
 	case EStatementType::ESTCondition:
-		ProcesCondition(Statement);
+		GenerateCondition(Statement);
 		GenerateCode(Statement.InternalStatement);
 		ProcessLabel(Statement);
 		break;
