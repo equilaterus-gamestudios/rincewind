@@ -186,7 +186,8 @@
   <ItemGroup>
     <ClCompile Include="CodeGenerator.cpp" />
     <ClCompile Include="Context.cpp" />
-    <ClCompile Include="lex.yy.cpp" />
+    <ClCompile Include="generated\lex.yy.cpp" />
+    <ClCompile Include="generated\parser.cpp" />
     <ClCompile Include="lib\convert.cpp" />
     <ClCompile Include="lib\debug.cpp" />
     <ClCompile Include="lib\error.cpp" />
@@ -196,7 +197,6 @@
     <ClCompile Include="lib\posix.cpp" />
     <ClCompile Include="lib\unicode.cpp" />
     <ClCompile Include="lib\utf8.cpp" />
-    <ClCompile Include="parser.cpp" />
     <ClCompile Include="Source.cpp" />
     <ClCompile Include="unicode\block_scripts.cpp" />
     <ClCompile Include="unicode\language_scripts.cpp" />
@@ -205,11 +205,15 @@
   <ItemGroup>
     <ClInclude Include="CodeGenerator.h" />
     <ClInclude Include="Context.h" />
-    <ClInclude Include="lex.yy.h" />
-    <ClInclude Include="location.hh" />
-    <ClInclude Include="parser.h" />
+    <ClInclude Include="generated\lex.yy.h" />
+    <ClInclude Include="generated\location.hh" />
+    <ClInclude Include="generated\parser.h" />
     <ClInclude Include="Resources.h" />
     <ClInclude Include="Types.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="build.sh" />
+    <Content Include="makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

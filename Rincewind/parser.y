@@ -13,7 +13,7 @@
 
 %code requires {
 	#pragma warning(disable: 4065)	
-	#include "Types.h"
+	#include "../Types.h"
 	#include <string>
 	
 	class Context;
@@ -28,7 +28,7 @@
 %{
 	#include <iostream>
 	#include <cmath>	
-	#include "Context.h"
+	#include "../Context.h"
 	#include "lex.yy.h"
 
 	#undef yylex

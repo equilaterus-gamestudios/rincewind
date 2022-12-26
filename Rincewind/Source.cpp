@@ -3,7 +3,7 @@
 #include <iostream>
 #include "Context.h"
 #include "CodeGenerator.h"
-#include "lex.yy.h"
+#include "generated/lex.yy.h"
 
 int main(int argc, char** argv)
 {

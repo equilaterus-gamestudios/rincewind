@@ -15,7 +15,7 @@
 
 %top{
 	#include "parser.h"
-	#include "Context.h"	
+	#include "../Context.h"	
 }
 
 %class{

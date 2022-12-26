@@ -4,8 +4,8 @@
 #include <set>
 #include <vector>
 #include <iostream>
-#include "parser.h"
-#include "location.hh"
+#include "generated/parser.h"
+#include "generated/location.hh"
 #include "Types.h"
 #include "Resources.h"
 

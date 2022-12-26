@@ -51,6 +51,7 @@ Rincewind/lib
 Rincewind/unicode
 
 # Generated files
-Rincewind/lex.yy.*
-Rincewind/parser.*
-Rincewind/location.hh
+Rincewind/generated
+
+#rider
+.idea/
