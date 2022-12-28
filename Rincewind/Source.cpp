@@ -5,8 +5,11 @@
 #include "CodeGenerator.h"
 #include "generated/lex.yy.h"
 
+
 int main(int argc, char** argv)
 {
+    int a;
+    std::cin >>a; 
     if (argc < 3)
     {
         std::cout << "Please, enter the path, input file and the output name\n";

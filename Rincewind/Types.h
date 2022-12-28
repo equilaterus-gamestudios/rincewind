@@ -4,209 +4,238 @@
 #include <map>
 #include "Resources.h"
 
-enum EStatementType
+enum statement_type
 {
-	ESTDialog,
-	ESTDialogWithOptions,
-	ESTOption,
-	ESTCommand,
-	ESTJump,
-	ESTLabel,
-	ESTCall,
-	ESTCondition,
-	ESTWaitOptionSelection,
-	ESTWaitInteraction
+	Dialog,
+	DialogWithOptions,
+	Option,
+	Command,
+	Jump,
+	Label,
+	Call,
+	Condition,
+	WaitOptionSelection,
+	WaitInteraction
 };
 
-enum EConditionalType
+enum conditional_type
 {
-	ECTGreater,
-	ECTLess,
-	ECTGreaterOrEqual,
-	ECTLessOrEqual,
-	ECTEqual,
-	ECTNotEqual
+	Greater,
+	Less,
+	GreaterOrEqual,
+	LessOrEqual,
+	Equal,
+	NotEqual
 };
 
-struct FStatement;
+struct statement;
 
-typedef std::vector<FStatement> TStatements;
-typedef std::map<std::string, std::string> TParameters;
-struct FStatement
+typedef std::vector<statement> TStatements;
+typedef std::map<std::string, std::string> TParameters; // Check value
+
+struct statement
 {
-	std::string Name;
-	EStatementType Type;
+	statement_type Type;
+	std::string StrValue;
 
 	//Only use this for conditionals
+	// Check type
 	TStatements InternalStatement;
 
 	TParameters Parameters;
 	bool bByPass = false;
-
-	FStatement() = default;
-	FStatement(std::string InName, EStatementType InType)
-	{
-		Name = InName;
-		Type = InType;
-	}
-
-	void AddParameter(std::string ParameterName, std::string ParameterValue)
-	{
-		Parameters[ParameterName] = ParameterValue;
-	}
-	void AddInternalStatement(FStatement& Statement)
-	{
-		InternalStatement.push_back(Statement);
-	}
-
-	static FStatement CreateDialog(FResources& Resources, std::string Title, std::string Text, bool hasOptions = false)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = "SetDialog";
-		Statement.Type = hasOptions ? EStatementType::ESTDialogWithOptions : EStatementType::ESTDialog;
-		Statement.AddParameter("Title", Resources.InsertResource(Title, true));
-		if (Text.size() > 0)
-			Statement.AddParameter("Text", Resources.InsertResource(Text));
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateOption(FResources& Resources, std::string Text)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = "SetOption";
-		Statement.Type = EStatementType::ESTOption;		
-		Statement.AddParameter("Text", Resources.InsertResource(Text));
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateCommand(std::string Variable, std::string Value)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = "ExecuteCommand";
-		Statement.Type = EStatementType::ESTCommand;
-		std::string FixedVariable = Variable.substr(1);
-		FixedVariable[0] = toupper(FixedVariable[0]);
-		Statement.AddParameter("Variable", FixedVariable);
-		Statement.AddParameter("Value", Value);
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateJump(std::string Text, std::string Label)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = "JumpTo";
-		Statement.Type = EStatementType::ESTJump;
-		Statement.AddParameter("Text", Text);
-		Statement.AddParameter("Line", Label);
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateLabel(std::string Label)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = Label;
-		Statement.Type = EStatementType::ESTLabel;		
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateCall(std::string FunctionName)
-	{
-		FStatement Statement = FStatement();
-		Statement.Name = "Call";
-		Statement.Type = EStatementType::ESTCall;
-		Statement.AddParameter("Function", FunctionName);
-		Statement.bByPass = false;
-		return Statement;
-	}
-	static FStatement CreateCondition(EConditionalType ConditionType, std::string Alias, int NumConst)
-	{
-		FStatement Statement = FStatement("Condition", EStatementType::ESTCondition);
-		Statement.AddParameter("ConditionType", std::to_string(ConditionType));
-		Statement.AddParameter("FirstAlias", Alias);
-		Statement.AddParameter("Literal", std::to_string(NumConst));
-
-		return Statement;
-	}
-	static FStatement CreateCondition(EConditionalType ConditionType, std::string FirstAlias, std::string SecondAlias)
-	{
-		FStatement Statement = FStatement("Condition", EStatementType::ESTCondition);
-		Statement.AddParameter("ConditionType", std::to_string(ConditionType));
-		Statement.AddParameter("FirstAlias", FirstAlias);
-		Statement.AddParameter("SecondAlias", SecondAlias);
-		
-		return Statement;
-	}
-
-	static FStatement CreateWaitOptionSelection()
-	{
-		FStatement Statement = FStatement("Wait", EStatementType::ESTWaitOptionSelection);
-
-		return Statement;
-	}
-
-	static FStatement CreateOptionFromJump(FResources& Resources, FStatement& JumpStatement)
-	{	
-		//If is a condition, then, get the jump from the internal statements
-		if (JumpStatement.Type == EStatementType::ESTCondition)
-		{
-			//JumpStatement is a condition
-			//For now, lets get the first one
-			FStatement& RealJumpStatement = JumpStatement.InternalStatement.front();			
-			FStatement Option = CreateOption(Resources, RealJumpStatement.Parameters["Text"]);
-			Option.AddParameter("Line", RealJumpStatement.Parameters["Line"]);
-			JumpStatement.InternalStatement[0] = Option;
-			return JumpStatement; //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
-		}		
-
-		FStatement OptionStatement = CreateOption(Resources, JumpStatement.Parameters["Text"]);
-		OptionStatement.AddParameter("Line", JumpStatement.Parameters["Line"]);
-
-		return OptionStatement;
-	}
-	static FStatement CreateDialogFromJump(FResources& Resources, std::string Title, FStatement& JumpStatement)
-	{
-		//This should not happen!!!!!
-		//If is a condition, then, get the jump from the internal statements
-		if (JumpStatement.Type == EStatementType::ESTCondition)
-		{
-			//JumpStatement is a condition
-			//For now, lets get the first one
-			FStatement& RealJumpStatement = JumpStatement.InternalStatement.front();
-			JumpStatement.InternalStatement[0] = CreateDialog(Resources, Title, RealJumpStatement.Parameters["Text"]);
-			JumpStatement.InternalStatement[0].AddParameter("Line", RealJumpStatement.Parameters["Line"]);
-			return JumpStatement; //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
-		}
-
-		FStatement DialogStatement = CreateDialog(Resources, Title, JumpStatement.Parameters["Text"]);
-		DialogStatement.AddParameter("Line", JumpStatement.Parameters["Line"]);
-
-		return DialogStatement;
-	}
-
-	
-	static TStatements JoinTwoStatements(FStatement& FirstStatement, FStatement& SecondStatement)
-	{
-		return TStatements{ FirstStatement, SecondStatement };
-	}
-
-	static void AtBegining(FStatement& Statement, TStatements& Statements)
-	{
-		Statements.emplace(Statements.begin(), Statement);
-	}
-
-	static void AtEnd(FStatement& Statement, TStatements& Statements)
-	{
-		Statements.push_back(Statement);
-	}
-
-	static TStatements JointTwoListOfStatements(TStatements& FirstStatements, TStatements& SecondStatements)
-	{
-		TStatements JoinedStatements;
-		JoinedStatements.reserve(FirstStatements.size() + SecondStatements.size());// preallocate memory    
-		
-		JoinedStatements.insert(JoinedStatements.end(), FirstStatements.begin(), FirstStatements.end());
-		JoinedStatements.insert(JoinedStatements.end(), SecondStatements.begin(), SecondStatements.end());
-
-		return JoinedStatements;
-	}
 };
+
+internal
+statement MakeStatement(const std::string& Name, statement_type Type)
+{
+	statement Statement;
+	Statement.Name = Name;
+	Statement.Type = Type;
+	return (Statement);
+}
+
+internal
+void AddParameter(statement* Statement, const std::string& ParameterName, int ParameterValue)
+{
+	Statement->Parameters[ParameterName] = ParameterValue;
+}
+
+internal 
+void AddInternalStatement(statement* Statement, statement* InternalStatement)
+{	
+	Statement->InternalStatement.push_back(*InternalStatement);
+}
+
+#define SET_DIALOG "SetDialog"
+#define SET_OPTION "SetOption"
+#define EXECUTE_COMMAND "ExecuteCommand"
+#define JUMP_TO "JumpTo"
+#define TITLE "Title"
+#define TEXT "Text"
+
+function
+statement CreateDialog(resource* Resources, std::string Title, std::string Text, bool hasOptions = false)
+{
+	statement_type type = hasOptions ? statement_type::DialogWithOptions : statement_type::Dialog;
+	statement Statement = MakeStatement(SET_DIALOG, type);
+	Statement.bByPass = false;
+
+	AddParameter(&Statement, TITLE, InsertUniqueResource(Resources, Title));		
+	if (Text.size() > 0)
+		AddParameter(&Statement, TEXT, InsertResource(Resources, Title));
+	
+	return (Statement);
+}
+
+
+function
+statement CreateOption(resource* Resources, std::string Text)
+{
+	statement Statement = MakeStatement(SET_OPTION, statement_type::Option);
+	Statement.bByPass = false;
+	AddParameter(&Statement, TEXT, InsertResource(Resources, Text));	
+	return (Statement);
+}
+/*
+function
+statement CreateCommand(std::string Variable, std::string Value)
+{
+	statement Statement = MakeStatement(EXECUTE_COMMAND, statement_type::Command);
+	std::string FixedVariable = Variable.substr(1);
+	FixedVariable[0] = toupper(FixedVariable[0]);
+	AddParameter(&Statement, "Variable", FixedVariable);
+	AddParameter(&Statement, "Value", Value);
+	Statement.bByPass = false;
+	return Statement;
+}
+*/
+function
+statement CreateJump(std::string Text, std::string Label)
+{
+	statement Statement = MakeStatement(JUMP_TO, statement_type::Jump);	
+	AddParameter(&Statement, "Text", Text); // why not storing this in resources
+	AddParameter(&Statement, "Line", Label);
+	Statement.bByPass = false;
+	return (Statement);
+}
+
+function
+statement CreateLabel(std::string Label)
+{
+	statement Statement = MakeStatement(Label, statement_type::Label);	
+	Statement.bByPass = false;
+	return (Statement);
+}
+
+function
+statement CreateCall(std::string FunctionName)
+{
+	statement Statement = MakeStatement("Call", statement_type::Call);	
+	AddParameter(&Statement, "Function", FunctionName);
+	Statement.bByPass = false;
+	return (Statement);
+}
+
+function 
+statement CreateCondition(conditional_type ConditionType, std::string Alias, int NumConst)
+{
+	statement Statement = MakeStatement("Condition", statement_type::Condition);
+	AddParameter(&Statement, "ConditionType", std::to_string(ConditionType));
+	AddParameter(&Statement, "FirstAlias", Alias);
+	AddParameter(&Statement, "Literal", std::to_string(NumConst));
+
+	return (Statement);
+}
+
+function
+statement CreateCondition(conditional_type ConditionType, std::string FirstAlias, std::string SecondAlias)
+{
+	statement Statement = MakeStatement("Condition", statement_type::Condition);
+	AddParameter(&Statement, "ConditionType", std::to_string(ConditionType));
+	AddParameter(&Statement, "FirstAlias", FirstAlias);
+	AddParameter(&Statement, "SecondAlias", SecondAlias);
+	
+	return (Statement);
+}
+
+function
+statement CreateWaitOptionSelection()
+{
+	statement Statement = MakeStatement("Wait", statement_type::WaitOptionSelection);
+
+	return (Statement);
+}
+
+function
+statement CreateOptionFromJump(resource* Resources, statement* JumpStatement)
+{	
+	//If is a condition, then, get the jump from the internal statements
+	if (JumpStatement->Type == statement_type::Condition)
+	{
+		//JumpStatement is a condition
+		//For now, lets get the first one
+		statement* RealJumpStatement = &JumpStatement->InternalStatement.front();			
+		statement Option = CreateOption(Resources, RealJumpStatement->Parameters["Text"]);
+		AddParameter(&Option, "Line", RealJumpStatement->Parameters["Line"]);
+		JumpStatement->InternalStatement[0] = Option;
+		return (JumpStatement); //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
+	}		
+
+	statement OptionStatement = CreateOption(Resources, JumpStatement->Parameters["Text"]);
+	AddParameter(&OptionStatement, "Line", JumpStatement->Parameters["Line"]);
+
+	return OptionStatement;
+}
+
+function
+statement CreateDialogFromJump(resource* Resources, std::string Title, statement* JumpStatement)
+{
+	//This should not happen!!!!!
+	//If is a condition, then, get the jump from the internal statements
+	if (JumpStatement->Type == statement_type::Condition)
+	{
+		//JumpStatement is a condition
+		//For now, lets get the first one
+		statement* RealJumpStatement = &JumpStatement->InternalStatement.front();
+		JumpStatement->InternalStatement[0] = CreateDialog(Resources, Title, RealJumpStatement.Parameters["Text"]);
+		AddParameter(&JumpStatement->InternalStatement[0], "Line", RealJumpStatement.Parameters["Line"]);
+		return (JumpStatement); //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
+	}
+
+	statement DialogStatement = CreateDialog(Resources, Title, JumpStatement->Parameters["Text"]);
+	AddParameter(DialogStatement, "Line", JumpStatement->Parameters["Line"]);
+
+	return (DialogStatement);
+}
+
+
+function
+statement JoinTwoStatements(FStatement& FirstStatement, FStatement& SecondStatement)
+{
+	return TStatements{ FirstStatement, SecondStatement };
+}
+
+function
+void AtBegining(FStatement& Statement, TStatements& Statements)
+{
+	Statements.emplace(Statements.begin(), Statement);
+}
+
+function
+void AtEnd(FStatement& Statement, TStatements& Statements)
+{
+	Statements.push_back(Statement);
+}
+
+function
+TStatements JointTwoListOfStatements(TStatements& FirstStatements, TStatements& SecondStatements)
+{
+	TStatements JoinedStatements;
+	JoinedStatements.reserve(FirstStatements.size() + SecondStatements.size());// preallocate memory    
+	
+	JoinedStatements.insert(JoinedStatements.end(), FirstStatements.begin(), FirstStatements.end());
+	JoinedStatements.insert(JoinedStatements.end(), SecondStatements.begin(), SecondStatements.end());
+
+	return JoinedStatements;
+}

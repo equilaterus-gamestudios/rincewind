@@ -3,31 +3,34 @@
 #include <map>
 #include <string>
 
-struct FResources
+#define MAX_DATA 5000
+#define function static
+#define internal static
+
+struct resource
 {
-    FResources() : Consecutive(0) {}
+    //std::map<std::string, std::string> Titles;
 
-    std::map<std::string, std::string> Titles;
+    std::string Data[MAX_DATA];
+    std::unordered_map<std::string, int> UniqueData;
 
-    std::unordered_map<std::string, std::string> Texts;
-
-    int Consecutive;
-    
-    std::string InsertResource(std::string Resource, bool bIsTitle = false)
-    {
-        if (bIsTitle && Titles.count(Resource) != 0)
-        {
-            return Titles[Resource];
-        }
-
-        std::string Id = "LOR" + std::to_string(Consecutive++);
-        Texts[Id] = Resource;
-
-        if (bIsTitle)
-        {
-            Titles[Resource] = Id;
-        }
-
-        return Id;
-    }
+    int DataBufferSize;
 };
+
+function
+int InsertResource(resource* Resource, const std::string& Data)
+{
+    Resource->Data[Resource->DataBufferSize] = Data;
+    return (Resource->DataBufferSize++);
+}
+
+function
+int InsertUniqueResource(resource* Resource, const std::string& Data)
+{
+    if (!Resource->UniqueData.count(Data))
+    {
+        Resource->UniqueData.emplace(Data, Resource->DataBufferSize);
+        return (InsertResource(Resource, Data));
+    }
+    return Resource->UniqueData[Data];
+}
