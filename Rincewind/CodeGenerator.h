@@ -1,6 +1,7 @@
+#pragma once
 #include <string>
 #include <map>
-#include "Types.h"
+#include "rincewind_statement.h"
 
 /**
  * Rincewind machine
@@ -89,56 +90,57 @@ class Context;
 * The Process functions do not generates code, but prepares the code generator and sync the CodeContext with usefull information to proceed with the translation.
 * 
 */
-class CodeGenerator
-{
-public:
-	CodeGenerator() : ConditionalSequence(0)
-	{
-		CodeContext = nullptr;
-	}
-	CodeGenerator(Context* InContext);
 
-	std::vector<FRincewindStatement> RincewindCode; //:)
+// class CodeGenerator
+// {
+// public:
+// 	CodeGenerator() : ConditionalSequence(0)
+// 	{
+// 		CodeContext = nullptr;
+// 	}
+// 	CodeGenerator(Context* InContext);
+
+// 	std::vector<FRincewindStatement> RincewindCode; //:)
 
 
-private:
+// private:
 
-	int ConditionalSequence;
+// 	int ConditionalSequence;
 
-	std::vector<int> LinesWithLabelProcessingPending;
+// 	std::vector<int> LinesWithLabelProcessingPending;
 
-	Context* CodeContext;
+// 	Context* CodeContext;
 
-	void GenerateDialogCode(FStatement& Statement, bool bWithText);
+// 	void GenerateDialogCode(FStatement& Statement, bool bWithText);
 
-	void GenerateOptionCode(FStatement& Statement);
+// 	void GenerateOptionCode(FStatement& Statement);
 
-	void GenerateWaitForOptionCode();
+// 	void GenerateWaitForOptionCode();
 
-	void GenerateJumpCode(FStatement& Statement);
+// 	void GenerateJumpCode(FStatement& Statement);
 
-	void GenerateCallCode(FStatement& Statement);
+// 	void GenerateCallCode(FStatement& Statement);
 
-	/**
-	 * This function adds the label to the identifiers table in the CodeContex, so in the future, when ProcessJumpsSecondPass is called, the context will know which line represents
-	 * this label
-	 */
-	void ProcessLabel(FStatement& Statement);
+// 	/**
+// 	 * This function adds the label to the identifiers table in the CodeContex, so in the future, when ProcessJumpsSecondPass is called, the context will know which line represents
+// 	 * this label
+// 	 */
+// 	void ProcessLabel(FStatement& Statement);
 
-	std::string GenerateStoreContext(std::string& Alias);
+// 	std::string GenerateStoreContext(std::string& Alias);
 
-	void GenerateCondition(FStatement& Statement);
+// 	void GenerateCondition(FStatement& Statement);
 
-	void ProcesFStatement(FStatement& Statement);	
+// 	void ProcesFStatement(FStatement& Statement);	
 
-	void GenerateCode(TStatements& Statemets);
+// 	void GenerateCode(TStatements& Statemets);
 	
-public:
-	/**
-	 * The first pass generating the code doesn't know which line represents each label, so, after generating all the code, we need to change the label with the real code line
-	 */
-	void ProcessJumpsSecondPass();
+// public:
+// 	/**
+// 	 * The first pass generating the code doesn't know which line represents each label, so, after generating all the code, we need to change the label with the real code line
+// 	 */
+// 	void ProcessJumpsSecondPass();
 
-	void GenerateCode();
-};
+// 	void GenerateCode();
+// };
 

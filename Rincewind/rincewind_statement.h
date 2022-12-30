@@ -1,100 +1,135 @@
 #pragma once
-#include <string>
+
 #include <vector>
 #include <map>
-#include "Resources.h"
+#include <iostream>
+#include "rincewind_resource.h"
 
-enum statement_type
+enum class statement_type
 {
+	None = 0,
+	/*Atom types*/
+	Number,
+	String,
+	Label,
+	UniqueString, 
+	Identifier,
+	Call,
+	WaitOptionSelection,
+	WaitInteraction,
+	/**/
 	Dialog,
 	DialogWithOptions,
 	Option,
 	Command,
 	Jump,
-	Label,
-	Call,
 	Condition,
-	WaitOptionSelection,
-	WaitInteraction
-};
 
-enum conditional_type
-{
-	Greater,
-	Less,
-	GreaterOrEqual,
-	LessOrEqual,
+	Code,
+	
+	/*logical*/
 	Equal,
-	NotEqual
+	NotEqual,
+	Greater,
+	GreaterOrEqual,
+	Less,
+	LessOrEqual
 };
 
 struct statement;
+typedef std::vector<statement> parameters;
 
-typedef std::vector<statement> TStatements;
-typedef std::map<std::string, std::string> TParameters; // Check value
-
+//TODO(pipecaniza): find a way to move out values from statement.
 struct statement
 {
-	statement_type Type;
+	statement_type Type = statement_type::None;
 	std::string StrValue;
+	int IntValue;
 
-	//Only use this for conditionals
-	// Check type
-	TStatements InternalStatement;
-
-	TParameters Parameters;
-	bool bByPass = false;
+	parameters Parameters;
 };
 
 internal
-statement MakeStatement(const std::string& Name, statement_type Type)
+statement MakeStatement(statement_type Type)
 {
-	statement Statement;
-	Statement.Name = Name;
+	statement Statement;	
 	Statement.Type = Type;
 	return (Statement);
 }
 
-internal
-void AddParameter(statement* Statement, const std::string& ParameterName, int ParameterValue)
+inline function bool
+IsAtomStatement(const statement* Statement)
 {
-	Statement->Parameters[ParameterName] = ParameterValue;
+	if (Statement->Type == statement_type::String || Statement->Type == statement_type::UniqueString 
+	|| Statement->Type == statement_type::Call    || Statement->Type == statement_type::Identifier 
+	|| Statement->Type == statement_type::Label	  || Statement->Type == statement_type::Number)
+		return true;
+	return false;
 }
 
-internal 
-void AddInternalStatement(statement* Statement, statement* InternalStatement)
-{	
-	Statement->InternalStatement.push_back(*InternalStatement);
-}
-
-#define SET_DIALOG "SetDialog"
-#define SET_OPTION "SetOption"
-#define EXECUTE_COMMAND "ExecuteCommand"
-#define JUMP_TO "JumpTo"
-#define TITLE "Title"
-#define TEXT "Text"
-
-function
-statement CreateDialog(resource* Resources, std::string Title, std::string Text, bool hasOptions = false)
+inline function
+statement CreateUniqueString(const std::string& String)
 {
-	statement_type type = hasOptions ? statement_type::DialogWithOptions : statement_type::Dialog;
-	statement Statement = MakeStatement(SET_DIALOG, type);
-	Statement.bByPass = false;
-
-	AddParameter(&Statement, TITLE, InsertUniqueResource(Resources, Title));		
-	if (Text.size() > 0)
-		AddParameter(&Statement, TEXT, InsertResource(Resources, Title));
-	
+	statement Statement = MakeStatement(statement_type::UniqueString);
+	Statement.StrValue = String;
 	return (Statement);
 }
 
-
-function
-statement CreateOption(resource* Resources, std::string Text)
+inline function
+statement CreateString(const std::string& String)
 {
-	statement Statement = MakeStatement(SET_OPTION, statement_type::Option);
-	Statement.bByPass = false;
-	AddParameter(&Statement, TEXT, InsertResource(Resources, Text));	
+	statement Statement = MakeStatement(statement_type::String);
+	Statement.StrValue = String;
+	return (Statement);
+}
+
+inline function
+statement CreateIdentifier(const std::string& String)
+{
+	statement Statement = MakeStatement(statement_type::Identifier);
+	Statement.StrValue = String;
+	return (Statement);
+}
+
+inline function
+statement CreateNumber(int Number)
+{
+	statement Statement = MakeStatement(statement_type::Number);
+	Statement.IntValue = Number;
+	return (Statement);
+}
+
+inline function
+statement CreateDialog(statement TitleStatement, statement TextStatement)
+{	
+	statement Statement = MakeStatement(statement_type::Dialog);
+	Statement.Parameters.push_back(TitleStatement);
+	Statement.Parameters.push_back(TextStatement);
+	return (Statement);
+}
+
+inline function
+statement CreateDialogWithOptions(statement TitleStatement, const parameters& options)
+{	
+	statement Statement = MakeStatement(statement_type::DialogWithOptions);
+	Statement.Parameters.push_back(TitleStatement);
+	Statement.Parameters.insert(Statement.Parameters.end(), options.begin(), options.end());
+	return (Statement);
+}
+
+inline function
+statement CreateOption(statement TextStatement)
+{
+	statement Statement = MakeStatement(statement_type::Option);
+	Statement.Parameters.push_back(TextStatement);
+	return (Statement);
+}
+
+inline function
+statement CreateCode(parameters CodeStatements)
+{
+	statement Statement = MakeStatement(statement_type::Code);
+	Statement.Parameters = CodeStatements;
 	return (Statement);
 }
 /*
@@ -110,44 +145,52 @@ statement CreateCommand(std::string Variable, std::string Value)
 	return Statement;
 }
 */
-function
-statement CreateJump(std::string Text, std::string Label)
+inline function
+statement CreateJump(statement TextStatement, statement LabelStatement)
 {
-	statement Statement = MakeStatement(JUMP_TO, statement_type::Jump);	
-	AddParameter(&Statement, "Text", Text); // why not storing this in resources
-	AddParameter(&Statement, "Line", Label);
-	Statement.bByPass = false;
+	statement Statement = MakeStatement(statement_type::Jump);
+	Statement.Parameters.push_back(TextStatement);
+	Statement.Parameters.push_back(LabelStatement);
 	return (Statement);
 }
 
-function
-statement CreateLabel(std::string Label)
+inline function
+statement CreateLabel(std::string& Label)
 {
-	statement Statement = MakeStatement(Label, statement_type::Label);	
-	Statement.bByPass = false;
+	statement Statement = MakeStatement(statement_type::Label);
+	Statement.StrValue = Label;
 	return (Statement);
 }
 
-function
-statement CreateCall(std::string FunctionName)
+inline function
+statement CreateCall(std::string& Function)
 {
-	statement Statement = MakeStatement("Call", statement_type::Call);	
-	AddParameter(&Statement, "Function", FunctionName);
-	Statement.bByPass = false;
+	statement Statement = MakeStatement(statement_type::Call);
+	Statement.StrValue = Function;	
 	return (Statement);
 }
 
-function 
-statement CreateCondition(conditional_type ConditionType, std::string Alias, int NumConst)
+
+inline function 
+statement CreateCondition(statement LogicalStatement, statement CodeStatement)
 {
-	statement Statement = MakeStatement("Condition", statement_type::Condition);
-	AddParameter(&Statement, "ConditionType", std::to_string(ConditionType));
-	AddParameter(&Statement, "FirstAlias", Alias);
-	AddParameter(&Statement, "Literal", std::to_string(NumConst));
+	statement Statement = MakeStatement(statement_type::Condition);	
+	Statement.Parameters.push_back(LogicalStatement);	
+	Statement.Parameters.push_back(CodeStatement);
+	return (Statement);
+}
+
+inline function
+statement CreateLogicalOperation(statement_type Type, statement A, statement B)
+{
+	statement Statement = MakeStatement(Type);
+	Statement.Parameters.push_back(A);
+	Statement.Parameters.push_back(B);
 
 	return (Statement);
 }
 
+/*
 function
 statement CreateCondition(conditional_type ConditionType, std::string FirstAlias, std::string SecondAlias)
 {
@@ -157,16 +200,15 @@ statement CreateCondition(conditional_type ConditionType, std::string FirstAlias
 	AddParameter(&Statement, "SecondAlias", SecondAlias);
 	
 	return (Statement);
-}
+}*/
 
-function
+inline function
 statement CreateWaitOptionSelection()
 {
-	statement Statement = MakeStatement("Wait", statement_type::WaitOptionSelection);
-
+	statement Statement = MakeStatement(statement_type::WaitOptionSelection);
 	return (Statement);
 }
-
+/*
 function
 statement CreateOptionFromJump(resource* Resources, statement* JumpStatement)
 {	
@@ -209,7 +251,7 @@ statement CreateDialogFromJump(resource* Resources, std::string Title, statement
 	return (DialogStatement);
 }
 
-
+*//*
 function
 statement JoinTwoStatements(FStatement& FirstStatement, FStatement& SecondStatement)
 {
@@ -238,4 +280,4 @@ TStatements JointTwoListOfStatements(TStatements& FirstStatements, TStatements& 
 	JoinedStatements.insert(JoinedStatements.end(), SecondStatements.begin(), SecondStatements.end());
 
 	return JoinedStatements;
-}
+}*/

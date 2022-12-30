@@ -1,32 +1,43 @@
 #pragma once
-#include <string>
-#include <map>
-#include <set>
-#include <vector>
-#include <iostream>
+/// Project
+#include "rincewind_statement.h"
+#include "rincewind_globals.h"
+#include "rincewind_resource.h"
+
+/// Generated
 #include "generated/parser.h"
 #include "generated/location.hh"
-#include "Types.h"
-#include "Resources.h"
+
 
 #define YY_DECL \
-  yy::parser::symbol_type yylex (Context& ctx)
+  yy::parser::symbol_type yylex (context& ctx)
 // ... and declare it for the parser's sake.
 YY_DECL;
 
 
+struct context
+{
+    statement AbstractTree;
+    yy::location Location;
+    int Errors = 0;
+};
+
+
+
+
+/*
 class Context
 {
 
-    void PrintStatements(std::vector<FStatement>& Statements);
+    //void PrintStatements(std::vector<FStatement>& Statements);
 public:
     Context();
         
-	std::vector<FStatement> Statements;
+	statement AbstractTree;
 
     std::map<std::string, int> Identifiers;
 
-    FResources Resources;
+    //FResources Resources;
 
     void Print();
 
@@ -45,8 +56,8 @@ public:
 
     int Errors;
 
-    void InsertStatements(std::vector<FStatement> InStatements);
+    //void InsertStatements(std::vector<FStatement> InStatements);
 
     void PrintStatements();
     
-};
+};*/

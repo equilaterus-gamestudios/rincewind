@@ -1,11 +1,45 @@
-#pragma once
+/// Project
+#include "rincewind.h"
+#include "rincewind_context.h"
+
+
+#ifdef DEBUG
+#include "rincewind_debug.h"
+#endif
+
+/// STL
 #include <fstream>
 #include <iostream>
-#include "Context.h"
-#include "CodeGenerator.h"
-#include "generated/lex.yy.h"
 
 
+int main(int argc, char** argv)
+{
+    FILE* File = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/test2.md", "r");
+    if (File == NULL)
+    {
+        std::cout << "file not found\n";
+        return -1;
+    }
+
+    compiler Compiler(File);
+    Compiler.Parser.parse();
+#ifdef DEBUG
+    PrintAST(&Compiler.Context.AbstractTree);
+#endif
+
+    if (Compiler.Context.Errors != 0)
+    {
+        std::cout << "Errors were found, fix the source file and recompile again to generate a target file.\n";
+        return -1;
+    }
+
+    return 0;
+}
+
+
+
+
+/*
 int main(int argc, char** argv)
 {
     int a;
@@ -89,4 +123,4 @@ int main(int argc, char** argv)
     std::cout << "Output has been generated\n";
     
     return 0;
-}
+}*/

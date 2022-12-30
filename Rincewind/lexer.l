@@ -7,20 +7,22 @@
 %option bison-locations
 
 %option namespace=yy
-%option lexer=Lexer
+%option lexer=lexer
 
 %option unicode
 
-%option ctorarg="Context* InCtx"
+%option ctorarg="context* InCtx"
 
 %top{
 	#include "parser.h"
-	#include "../Context.h"	
+	#include "../rincewind_context.h"
+	#undef internal
+	#undef function
 }
 
 %class{
 public:
-	Context* Ctx;
+	context* Ctx;
 }
 
 %init{
@@ -33,17 +35,18 @@ public:
 	#include <iostream>
 		
 	#pragma warning(disable: 4005)
+	#pragma GCC diagnostic ignored "-Wmacro-redefined"
 
 	int yycolumn = 1;
 
-	#define YY_USER_ACTION {						\
-		Ctx->loc.end.line = Ctx->loc.begin.line;		\
-		Ctx->loc.end.column = Ctx->loc.begin.column;	\
-		yycolumn = Ctx->loc.end.line == yylineno	\
-			? yycolumn								\
-			: 1;									\
-		Ctx->loc.begin.line = yylineno;				\
-		Ctx->loc.begin.column = yycolumn;			\
+	#define YY_USER_ACTION {									\
+		Ctx->Location.end.line = Ctx->Location.begin.line;		\
+		Ctx->Location.end.column = Ctx->Location.begin.column;	\
+		yycolumn = Ctx->Location.end.line == yylineno			\
+			? yycolumn											\
+			: 1;												\
+		Ctx->Location.begin.line = yylineno;					\
+		Ctx->Location.begin.column = yycolumn;					\
 		yycolumn += yyleng;							}
 
 
@@ -78,30 +81,30 @@ full_text	"`"{text}"`"
 ignored		[ \n\t\r]
 
 %%
-{label}			{ return yy::parser::make_LABEL				(TrimLeft(TrimLeft(yytext, '#')), Ctx->loc);		}
+{label}			{ return yy::parser::make_LABEL				(TrimLeft(TrimLeft(yytext, '#')), Ctx->Location);		}
 {identifier}	{ 
 					if (std::strcmp(yytext, "$call") == 0)
-						return yy::parser::make_CALL		(Ctx->loc);	
-					return yy::parser::make_IDENTIFIER		(TrimLeft(TrimLeft(yytext, '$')), Ctx->loc);				
+						return yy::parser::make_CALL		(Ctx->Location);	
+					return yy::parser::make_IDENTIFIER		(TrimLeft(TrimLeft(yytext, '$')), Ctx->Location);				
 				}
-{full_text}		{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->loc);	}
-"```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->loc);											}
-"*"				{ return yy::parser::make_STAR				(Ctx->loc);											}
-":"				{ return yy::parser::make_COLON				(Ctx->loc);											}	
-"="				{ return yy::parser::make_EQUAL				(Ctx->loc);											}
-"|"				{ return yy::parser::make_STICK				(Ctx->loc);											}
-"$"				{ return yy::parser::make_DOLLAR			(Ctx->loc);											}
-"-"				{ return yy::parser::make_HYPHEN			(Ctx->loc);											}
-"("				{ return yy::parser::make_OPEN_PARENTH		(Ctx->loc);											}	
-")"				{ return yy::parser::make_CLOSE_PARENTH		(Ctx->loc);											}
-"["				{ return yy::parser::make_OPEN_BRACKET		(Ctx->loc);											}	
-"]"				{ return yy::parser::make_CLOSE_BRACKET		(Ctx->loc);											}	
-">"				{ return yy::parser::make_GREATER			(Ctx->loc);											}
-"<"				{ return yy::parser::make_LESS				(Ctx->loc);											}
-"~"				{ return yy::parser::make_NOT				(Ctx->loc);											}
-{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->loc);						}
-{text}			{ return yy::parser::make_TEXT				(yytext, Ctx->loc);									}
-{ignored}		{}
-<<EOF>>			{ return yy::parser::make_END				(Ctx->loc);											}
-.				{ std::cout << "Unexpected Token: " << yytext << ", Line: " << yylineno << '\n';				}
+{full_text}		{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->Location);		}
+"```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->Location);											}
+"*"				{ return yy::parser::make_STAR				(Ctx->Location);											}
+":"				{ return yy::parser::make_COLON				(Ctx->Location);											}	
+"="				{ return yy::parser::make_EQUAL				(Ctx->Location);											}
+"|"				{ return yy::parser::make_STICK				(Ctx->Location);											}
+"$"				{ return yy::parser::make_DOLLAR			(Ctx->Location);											}
+"-"				{ return yy::parser::make_HYPHEN			(Ctx->Location);											}
+"("				{ return yy::parser::make_OPEN_PARENTH		(Ctx->Location);											}	
+")"				{ return yy::parser::make_CLOSE_PARENTH		(Ctx->Location);											}
+"["				{ return yy::parser::make_OPEN_BRACKET		(Ctx->Location);											}	
+"]"				{ return yy::parser::make_CLOSE_BRACKET		(Ctx->Location);											}	
+">"				{ return yy::parser::make_GREATER			(Ctx->Location);											}
+"<"				{ return yy::parser::make_LESS				(Ctx->Location);											}
+"~"				{ return yy::parser::make_NOT				(Ctx->Location);											}
+{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->Location);							}
+{text}			{ return yy::parser::make_TEXT				(yytext, Ctx->Location);									}
+{ignored}		{ }
+<<EOF>>			{ return yy::parser::make_END				(Ctx->Location);											}
+.				{ std::cout << "Unexpected Token: " << yytext << ", Line: " << yylineno << '\n';						}
 %%

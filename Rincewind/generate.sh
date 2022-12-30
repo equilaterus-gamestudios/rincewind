@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export PATH="$HOME/Source/GitHub/RE-flex/bin:$PATH"
+export PATH="$HOME/source/GitHub/RE-flex/bin:$PATH"
 
 echo "Cleaning generated"
 rm -r ./generated

@@ -1,8 +1,8 @@
-#include "Context.h"
+
 #include <iostream>
 
 
-
+/*
 
 Context::Context()
     :TraceParsing(false), TraceScanning(false), Consecutive(0), Errors(0)
@@ -57,4 +57,4 @@ void Context::PrintStatements(std::vector<FStatement>& Statements)
             PrintStatements(Statement.InternalStatement);
         }
     }
-}
+}*/
