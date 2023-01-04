@@ -1,9 +1,7 @@
 #pragma once
-
 #include <vector>
-#include <map>
-#include <iostream>
-#include "rincewind_resource.h"
+#include "rincewind_globals.h"
+#include "rincewind_common.h"
 
 enum class statement_type
 {
@@ -12,6 +10,7 @@ enum class statement_type
 	Number,
 	String,
 	Label,
+	DefineLabel,
 	UniqueString, 
 	Identifier,
 	Call,
@@ -23,6 +22,8 @@ enum class statement_type
 	Option,
 	Command,
 	Jump,
+	IndirectJump, 	//NOTE(pipecaniza): This is a jump that will be executed by the 
+					//machine when a dialog is executed, so in the code generation won´t generate a real jump statement
 	Condition,
 
 	Code,
@@ -43,8 +44,8 @@ typedef std::vector<statement> parameters;
 struct statement
 {
 	statement_type Type = statement_type::None;
-	std::string StrValue;
-	int IntValue;
+	string StrValue;
+	float NumericValue;
 
 	parameters Parameters;
 };
@@ -68,7 +69,7 @@ IsAtomStatement(const statement* Statement)
 }
 
 inline function
-statement CreateUniqueString(const std::string& String)
+statement CreateUniqueString(string String)
 {
 	statement Statement = MakeStatement(statement_type::UniqueString);
 	Statement.StrValue = String;
@@ -76,7 +77,7 @@ statement CreateUniqueString(const std::string& String)
 }
 
 inline function
-statement CreateString(const std::string& String)
+statement CreateString(string String)
 {
 	statement Statement = MakeStatement(statement_type::String);
 	Statement.StrValue = String;
@@ -84,7 +85,7 @@ statement CreateString(const std::string& String)
 }
 
 inline function
-statement CreateIdentifier(const std::string& String)
+statement CreateIdentifier(string String)
 {
 	statement Statement = MakeStatement(statement_type::Identifier);
 	Statement.StrValue = String;
@@ -92,10 +93,10 @@ statement CreateIdentifier(const std::string& String)
 }
 
 inline function
-statement CreateNumber(int Number)
+statement CreateNumber(float Number)
 {
 	statement Statement = MakeStatement(statement_type::Number);
-	Statement.IntValue = Number;
+	Statement.NumericValue = Number;
 	return (Statement);
 }
 
@@ -146,16 +147,24 @@ statement CreateCommand(std::string Variable, std::string Value)
 }
 */
 inline function
-statement CreateJump(statement TextStatement, statement LabelStatement)
+statement CreateJump(statement LabelStatement)
 {
 	statement Statement = MakeStatement(statement_type::Jump);
+	Statement.Parameters.push_back(LabelStatement);
+	return (Statement);
+}
+
+inline function
+statement CreateIndirectJump(statement TextStatement, statement LabelStatement)
+{
+	statement Statement = MakeStatement(statement_type::IndirectJump);
 	Statement.Parameters.push_back(TextStatement);
 	Statement.Parameters.push_back(LabelStatement);
 	return (Statement);
 }
 
 inline function
-statement CreateLabel(std::string& Label)
+statement CreateLabel(string Label)
 {
 	statement Statement = MakeStatement(statement_type::Label);
 	Statement.StrValue = Label;
@@ -163,7 +172,15 @@ statement CreateLabel(std::string& Label)
 }
 
 inline function
-statement CreateCall(std::string& Function)
+statement CreateDefineLabel(string Label)
+{
+	statement Statement = MakeStatement(statement_type::DefineLabel);
+	Statement.StrValue = Label;
+	return (Statement);
+}
+
+inline function
+statement CreateCall(string Function)
 {
 	statement Statement = MakeStatement(statement_type::Call);
 	Statement.StrValue = Function;	

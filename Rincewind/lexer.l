@@ -14,8 +14,9 @@
 %option ctorarg="context* InCtx"
 
 %top{
-	#include "parser.h"
+	#include "parser.h"	
 	#include "../rincewind_context.h"
+	#include "../rincewind_memory.h"
 	#undef internal
 	#undef function
 }
@@ -32,7 +33,7 @@ public:
 
 %{
 	#include <cstdlib>
-	#include <iostream>
+	#include <iostream>	
 		
 	#pragma warning(disable: 4005)
 	#pragma GCC diagnostic ignored "-Wmacro-redefined"
@@ -49,7 +50,8 @@ public:
 		Ctx->Location.begin.column = yycolumn;					\
 		yycolumn += yyleng;							}
 
-
+//TODO(pipecaniza): re-implement to not modify the char* content
+//TODO(pipecaniza): use trim
 	char* TrimLeft(char* text, char value = ' ')
 	{
 		while (text[0] == value)
@@ -69,7 +71,13 @@ public:
 		}
 		return text;
 	}
-	
+	/*{label}			{ return yy::parser::make_LABEL				(AllocateString(&Ctx->Arena, TrimLeft(TrimLeft(yytext, '#'))), Ctx->Location);		}
+{identifier}	{ 
+					if (std::strcmp(yytext, "$call") == 0)
+						return yy::parser::make_CALL		(Ctx->Location);	
+					return yy::parser::make_IDENTIFIER		(AllocateString(&Ctx->Arena, TrimLeft(TrimLeft(yytext, '$'))), Ctx->Location);				
+				}
+{full_text}		{ return yy::parser::make_TEXT				(AllocateString(&Ctx->Arena, TrimRight(TrimLeft(yytext,'`'), '`')), Ctx->Location);		}*/
 %}
 
 digits		[0-9]+
@@ -81,13 +89,13 @@ full_text	"`"{text}"`"
 ignored		[ \n\t\r]
 
 %%
-{label}			{ return yy::parser::make_LABEL				(TrimLeft(TrimLeft(yytext, '#')), Ctx->Location);		}
+{label}			{ return yy::parser::make_LABEL				(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '#'))), Ctx->Location);		}
 {identifier}	{ 
 					if (std::strcmp(yytext, "$call") == 0)
 						return yy::parser::make_CALL		(Ctx->Location);	
-					return yy::parser::make_IDENTIFIER		(TrimLeft(TrimLeft(yytext, '$')), Ctx->Location);				
+					return yy::parser::make_IDENTIFIER		(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '$'))), Ctx->Location);				
 				}
-{full_text}		{ return yy::parser::make_TEXT				(TrimRight(TrimLeft(yytext,'`'), '`'), Ctx->Location);		}
+{full_text}		{ return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext,'`'), '`')), Ctx->Location);		}
 "```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->Location);											}
 "*"				{ return yy::parser::make_STAR				(Ctx->Location);											}
 ":"				{ return yy::parser::make_COLON				(Ctx->Location);											}	
@@ -103,7 +111,7 @@ ignored		[ \n\t\r]
 "<"				{ return yy::parser::make_LESS				(Ctx->Location);											}
 "~"				{ return yy::parser::make_NOT				(Ctx->Location);											}
 {digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->Location);							}
-{text}			{ return yy::parser::make_TEXT				(yytext, Ctx->Location);									}
+{text}			{ return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext))), Ctx->Location);									}
 {ignored}		{ }
 <<EOF>>			{ return yy::parser::make_END				(Ctx->Location);											}
 .				{ std::cout << "Unexpected Token: " << yytext << ", Line: " << yylineno << '\n';						}

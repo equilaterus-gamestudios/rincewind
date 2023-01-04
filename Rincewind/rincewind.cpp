@@ -1,37 +1,43 @@
 /// Project
 #include "rincewind.h"
-#include "rincewind_context.h"
-
-
-#ifdef DEBUG
-#include "rincewind_debug.h"
-#endif
-
-/// STL
-#include <fstream>
-#include <iostream>
 
 
 int main(int argc, char** argv)
 {
-    FILE* File = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/test2.md", "r");
-    if (File == NULL)
+    FILE* InputFile = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/test2.md", "r");
+    if (InputFile == NULL)
     {
         std::cout << "file not found\n";
         return -1;
     }
 
-    compiler Compiler(File);
+    compiler Compiler(InputFile);
     Compiler.Parser.parse();
+    fclose(InputFile);
 #ifdef DEBUG
     PrintAST(&Compiler.Context.AbstractTree);
 #endif
 
-    if (Compiler.Context.Errors != 0)
+    if (Compiler.Context.ParsingErrors != 0)
     {
         std::cout << "Errors were found, fix the source file and recompile again to generate a target file.\n";
         return -1;
     }
+
+    
+    FILE* FileCode = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/out.dialog", "wb");
+    FILE* FileResources = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/a.csv", "w");
+    GenerateCode(&Compiler.CodeGen);
+    GenerateMachineCode(&Compiler.CodeGen);
+
+    ExportResources(&Compiler.Resource, FileCode);
+    ExportCode(&Compiler.CodeGen, FileCode);
+    ExportLocationResource(&Compiler.Resource, FileResources);
+    
+    //FileResources = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/outresources", "rb");
+    //ImportResource(&Compiler.Resource, FileResources);
+    fclose(FileCode);
+    fclose(FileResources);
 
     return 0;
 }

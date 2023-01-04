@@ -1,14 +1,16 @@
 #pragma once
+#include <string>
+
 ///Project
 #include "rincewind_globals.h"
 #include "rincewind_statement.h"
-#include <cstdio>
 
 static std::string StatementAsString[] = {
     "None",
 	"Number",
 	"String",
 	"Label",
+    "DefineLabel",
 	"UniqueString", 
 	"Identifier",
 	"Call",
@@ -19,6 +21,7 @@ static std::string StatementAsString[] = {
 	"Option",
 	"Command",
 	"Jump",
+    "IndirectJump",
 	"Condition",
 	"Code",
 	"Equal",
@@ -46,11 +49,17 @@ PrintAST(const statement* Statement, int Tab = 0)
     {
         if (Statement->Type == statement_type::Number)
         {
-            printf(": %d", Statement->IntValue);
+            printf(": %f", Statement->NumericValue);
         }
         else 
         {
-            printf(": %s", Statement->StrValue.c_str());
+            //char a[1000];
+            //for(int i = 0; i < Statement->StrValue.Size; ++i)
+            //{
+            //   a[i] = *(Statement->StrValue.Data + i);
+            //}
+            //a[Statement->StrValue.Size] = '\0';
+            printf(": %.*s", Statement->StrValue.Size, Statement->StrValue.Data);
         }
     }
     printf("\n");
