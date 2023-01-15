@@ -14,7 +14,6 @@
 %code requires {
 	#pragma warning(disable: 4065)	
 	#include "../rincewind_statement.h"	
-	#include "../rincewind_common.h"	
 	#undef internal
 	#undef function
 	struct context;
@@ -30,7 +29,7 @@
 	#include <iostream>
 	#include <cmath>	
 	#include "../rincewind_context.h"
-	#include "lex.yy.h"
+	#include "lex.yy.cpp"
 
 	#undef yylex
 	#define yylex Lexer.yylex  // Within bison's parse() we should invoke lexer.yylex(), not the global yylex()
@@ -72,7 +71,11 @@
 %start screenplay
 
 %%
-screenplay:		LABEL statements LABEL			{ Lexer.Ctx->AbstractTree = CreateCode($2); }
+screenplay:		LABEL statements LABEL			{ 
+													$2.insert($2.begin(), CreateDefineLabel($1));
+													$2.push_back(CreateDefineLabel($3));
+													Lexer.Ctx->AbstractTree = CreateCode($2); 
+												}
 ;
 
 statements:		statements statement			{ $1.push_back($2); $$ = $1;											}
@@ -87,12 +90,12 @@ statement:		dialog							{ $$ = $1;																}
 |				error							{ $$ = statement();														}
 ;
 
-dialog:			"-" TEXT ":" TEXT				{ $$ = CreateDialog(CreateUniqueString($2), CreateString($4));			}
-|				"-" TEXT ":" indirect_jump		{ $$ = CreateDialog(CreateUniqueString($2), $4); 						}
-|				"-" TEXT ":" options			{ $$ = CreateDialogWithOptions(CreateUniqueString($2), $4); 			}
-|				"-" TEXT ":" condition TEXT		{ $$ = CreateCondition($4, CreateDialog(CreateUniqueString($2), CreateString($5))); }
-|				"-" TEXT ":" condition indirect_jump { $$ = CreateCondition($4, CreateDialog(CreateUniqueString($2), $5)); }
-|				"-" TEXT ":" condition options	{ $$ = CreateCondition($4, CreateDialogWithOptions(CreateUniqueString($2), $5)); 	}
+dialog:			"-" TEXT ":" TEXT				{ $$ = CreateDialog(CreateNonLocalizationString($2), CreateLocalizationString($4));			}
+|				"-" TEXT ":" indirect_jump		{ $$ = CreateDialog(CreateNonLocalizationString($2), $4); 						}
+|				"-" TEXT ":" options			{ $$ = CreateDialogWithOptions(CreateNonLocalizationString($2), $4); 			}
+|				"-" TEXT ":" condition TEXT		{ $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), CreateLocalizationString($5))); }
+|				"-" TEXT ":" condition indirect_jump { $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), $5)); }
+|				"-" TEXT ":" condition options	{ $$ = CreateCondition($4, CreateDialogWithOptions(CreateNonLocalizationString($2), $5)); 	}
 ;
 
 options:		options option					{ $1.push_back($2); $$ = $1;											}
@@ -100,12 +103,12 @@ options:		options option					{ $1.push_back($2); $$ = $1;											}
 ;
 
 option:			"*" indirect_jump				{ $$ = CreateOption($2);												}
-|				"*" TEXT						{ $$ = CreateOption(CreateString($2));									}
+|				"*" TEXT						{ $$ = CreateOption(CreateLocalizationString($2));									}
 |				"*" indirect_jump condition		{ $$ = CreateCondition($3, CreateOption($2));							}
-|				"*" TEXT condition				{ $$ = CreateCondition($3, CreateOption(CreateString($2)));				}
+|				"*" TEXT condition				{ $$ = CreateCondition($3, CreateOption(CreateLocalizationString($2)));				}
 ;
 
-indirect_jump:	"[" TEXT "]" "(" LABEL ")"		{ $$ = CreateIndirectJump(CreateString($2), CreateLabel($5)); 			}
+indirect_jump:	"[" TEXT "]" "(" LABEL ")"		{ $$ = CreateIndirectJump(CreateLocalizationString($2), CreateLabel($5)); 			}
 ;
 
 jump:			"[" TEXT "]" "(" LABEL ")"		{ $$ = CreateJump(CreateLabel($5)); 									}
@@ -139,5 +142,5 @@ condition_sign:	">"								{ $$ = statement_type::Greater; 										}
 void yy::parser::error (const location_type& loc, const std::string& msg)
 {
 	Lexer.Ctx->ParsingErrors++;
-	std::cout << "Syntax Error: (" << loc.begin.line << ", " << loc.begin.column << ") - " << msg << '\n';	
+	printf("Syntax error: (%d, %d) - %s\n", loc.begin.line, loc.begin.column, msg.c_str());
 }

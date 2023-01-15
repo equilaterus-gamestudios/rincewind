@@ -7,11 +7,11 @@ enum class statement_type
 {
 	None = 0,
 	/*Atom types*/
-	Number,
-	String,
+	Number,	
 	Label,
 	DefineLabel,
-	UniqueString, 
+	LocalizationString,
+	NonLocalizationString, 
 	Identifier,
 	Call,
 	WaitOptionSelection,
@@ -61,25 +61,26 @@ statement MakeStatement(statement_type Type)
 inline function bool
 IsAtomStatement(const statement* Statement)
 {
-	if (Statement->Type == statement_type::String || Statement->Type == statement_type::UniqueString 
+	if (Statement->Type == statement_type::LocalizationString || Statement->Type == statement_type::NonLocalizationString 
 	|| Statement->Type == statement_type::Call    || Statement->Type == statement_type::Identifier 
-	|| Statement->Type == statement_type::Label	  || Statement->Type == statement_type::Number)
+	|| Statement->Type == statement_type::Label	  || Statement->Type == statement_type::Number
+	|| Statement->Type == statement_type::DefineLabel)
 		return true;
 	return false;
 }
 
 inline function
-statement CreateUniqueString(string String)
+statement CreateNonLocalizationString(string String)
 {
-	statement Statement = MakeStatement(statement_type::UniqueString);
+	statement Statement = MakeStatement(statement_type::NonLocalizationString);
 	Statement.StrValue = String;
 	return (Statement);
 }
 
 inline function
-statement CreateString(string String)
+statement CreateLocalizationString(string String)
 {
-	statement Statement = MakeStatement(statement_type::String);
+	statement Statement = MakeStatement(statement_type::LocalizationString);
 	Statement.StrValue = String;
 	return (Statement);
 }

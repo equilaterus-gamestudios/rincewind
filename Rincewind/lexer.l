@@ -15,8 +15,6 @@
 
 %top{
 	#include "parser.h"	
-	#include "../rincewind_context.h"
-	#include "../rincewind_memory.h"
 	#undef internal
 	#undef function
 }
@@ -71,13 +69,6 @@ public:
 		}
 		return text;
 	}
-	/*{label}			{ return yy::parser::make_LABEL				(AllocateString(&Ctx->Arena, TrimLeft(TrimLeft(yytext, '#'))), Ctx->Location);		}
-{identifier}	{ 
-					if (std::strcmp(yytext, "$call") == 0)
-						return yy::parser::make_CALL		(Ctx->Location);	
-					return yy::parser::make_IDENTIFIER		(AllocateString(&Ctx->Arena, TrimLeft(TrimLeft(yytext, '$'))), Ctx->Location);				
-				}
-{full_text}		{ return yy::parser::make_TEXT				(AllocateString(&Ctx->Arena, TrimRight(TrimLeft(yytext,'`'), '`')), Ctx->Location);		}*/
 %}
 
 digits		[0-9]+

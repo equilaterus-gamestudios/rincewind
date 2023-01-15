@@ -1,13 +1,55 @@
 /// Project
-#include "rincewind.h"
+//#include "rincewind.h"
+#include <cstring>
+#include <stdio.h>
 
+#include "rincewind_globals.h"
+#include "rincewind_memory.h"
+#include "rincewind_resource.h"
+#include "rincewind_context.h"
+#include "rincewind_code_gen.h"
+#ifdef DEBUG
+#include "rincewind_debug.h"
+#endif
+
+#include "generated/parser.cpp"
+
+
+
+global_variable char FilePath[500];
+
+
+struct compiler
+{
+    arena Arena;
+    context Context;
+    resource_container Resource;
+    yy::lexer Lexer;
+    yy::parser Parser;
+    code_gen CodeGen;
+
+    compiler(FILE* File) : Lexer(&Context, File, NULL), Parser(Lexer)
+    {
+        Context.Arena = &Arena;
+        CodeGen.Context = &Context;
+        CodeGen.Resource = &Resource;
+    }
+};
 
 int main(int argc, char** argv)
 {
-    FILE* InputFile = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/test2.md", "r");
+    char* InputPath = argv[1];
+    char* InputFileName = argv[2];
+    char* OutputPath = argv[3];
+    char* OutputFileName = argv[4];
+
+    strcpy(FilePath, InputPath);
+    strcat(FilePath, InputFileName);
+    
+    FILE* InputFile = fopen(FilePath, "r");
     if (InputFile == NULL)
     {
-        std::cout << "file not found\n";
+        printf("File not found: %s.\n", FilePath);
         return -1;
     }
 
@@ -20,22 +62,28 @@ int main(int argc, char** argv)
 
     if (Compiler.Context.ParsingErrors != 0)
     {
-        std::cout << "Errors were found, fix the source file and recompile again to generate a target file.\n";
+        printf("Errors were found while parsing the source code.\n");
         return -1;
     }
 
-    
-    FILE* FileCode = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/out.dialog", "wb");
-    FILE* FileResources = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/a.csv", "w");
     GenerateCode(&Compiler.CodeGen);
     GenerateMachineCode(&Compiler.CodeGen);
+
+    if (Compiler.Context.GeneratingErrors != 0)
+    {
+        printf("Errors were found while generating the code.\n");
+        return -1;
+    }
+
+    strcpy(FilePath, OutputPath); strcat(FilePath, OutputFileName); strcat(FilePath, ".dialog");
+    FILE* FileCode = fopen(FilePath, "wb");
+    strcpy(FilePath, OutputPath); strcat(FilePath, OutputFileName); strcat(FilePath, ".csv");
+    FILE* FileResources = fopen(FilePath, "w");
 
     ExportResources(&Compiler.Resource, FileCode);
     ExportCode(&Compiler.CodeGen, FileCode);
     ExportLocationResource(&Compiler.Resource, FileResources);
-    
-    //FileResources = fopen("/home/pipecaniza/source/GitHub/rincewind/Rincewind/outresources", "rb");
-    //ImportResource(&Compiler.Resource, FileResources);
+
     fclose(FileCode);
     fclose(FileResources);
 

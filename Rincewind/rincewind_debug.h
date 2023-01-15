@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 #include <string>
 
 ///Project
@@ -8,10 +9,10 @@
 static std::string StatementAsString[] = {
     "None",
 	"Number",
-	"String",
 	"Label",
-    "DefineLabel",
-	"UniqueString", 
+	"DefineLabel",
+	"LocalizationString",
+	"NonLocalizationString",
 	"Identifier",
 	"Call",
 	"WaitOptionSelection",
@@ -21,7 +22,7 @@ static std::string StatementAsString[] = {
 	"Option",
 	"Command",
 	"Jump",
-    "IndirectJump",
+	"IndirectJump",
 	"Condition",
 	"Code",
 	"Equal",
@@ -29,7 +30,7 @@ static std::string StatementAsString[] = {
 	"Greater",
 	"GreaterOrEqual",
 	"Less",
-	"LessOrEqual"
+	"LessOrEqual",
 };
 
 internal std::string 
@@ -43,7 +44,7 @@ GetTabs(int tabs)
 
 function void 
 PrintAST(const statement* Statement, int Tab = 0)
-{
+{    
     printf("%s%s", GetTabs(Tab).c_str(), StatementAsString[(int)Statement->Type].c_str())    ;
     if (IsAtomStatement(Statement))
     {
@@ -53,18 +54,41 @@ PrintAST(const statement* Statement, int Tab = 0)
         }
         else 
         {
-            //char a[1000];
-            //for(int i = 0; i < Statement->StrValue.Size; ++i)
-            //{
-            //   a[i] = *(Statement->StrValue.Data + i);
-            //}
-            //a[Statement->StrValue.Size] = '\0';
             printf(": %.*s", Statement->StrValue.Size, Statement->StrValue.Data);
         }
     }
     printf("\n");
-    for (auto param: Statement->Parameters)
+    for (auto& param: Statement->Parameters)
     {
         PrintAST(&param, Tab + 1);
     }
 }
+
+
+
+/*
+function void
+PrintGeneratedCode(FILE* File)
+{
+    unsigned char a = fgetc(File);
+    unsigned char b = fgetc(File);
+    unsigned char c = fgetc(File);
+    unsigned char d = fgetc(File);
+    printf("%d\n", a);
+    printf("%d\n", b);
+    printf("%d\n", c);
+    printf("%d\n", d);
+
+    int i1 = (d<<24) | (c<<16) | (b<<8) | (a);
+    int i2 = (a<<24) | (b<<16) | (c<<8) | (d);
+    printf("%d\n", i1);
+    printf("mix: %d\n", ChangeEndianness32(((a<<24) | (b<<16) | (c<<8) | (d))));
+
+    int t;
+    uint8* q = (uint8*)(&t);
+    *q = a; q++;
+    *q = b; q++;
+    *q = c; q++;
+    *q = d;
+    printf("%d\n", t);
+}*/
