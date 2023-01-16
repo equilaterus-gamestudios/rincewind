@@ -52,7 +52,7 @@ PrintAST(const statement* Statement, int Tab = 0)
 {    
     string StrTabResult = GetTabs(Tab);
     string StrStatement = StatementAsString[(int)Statement->Type];
-    printf("%.*s%.*s", StrTabResult.Size, StrTabResult.Data, StrStatement.Size, StatementAsString->Data);
+    printf("%.*s%.*s", StrTabResult.Size, StrTabResult.Data, StrStatement.Size, StrStatement.Data);
     if (IsAtomStatement(Statement))
     {
         if (Statement->Type == statement_type::Number)
