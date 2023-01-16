@@ -1,5 +1,6 @@
 #pragma once
 #include "rincewind_globals.h"
+#include <string.h>
 
 struct buffer
 {
@@ -8,6 +9,7 @@ struct buffer
 };
 typedef buffer string;
 
+#define BundleStringC(S) MakeString((char*)S, strlen(S))
 #define BundleString(S) MakeString(S, strlen(S))
 inline function string
 MakeString(uint8* Address, int Size)

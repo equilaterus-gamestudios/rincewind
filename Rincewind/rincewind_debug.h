@@ -1,51 +1,58 @@
 #pragma once
 #include <stdio.h>
-#include <string>
 
 ///Project
+#include "rincewind_common.h"
 #include "rincewind_globals.h"
 #include "rincewind_statement.h"
 
-static std::string StatementAsString[] = {
-    "None",
-	"Number",
-	"Label",
-	"DefineLabel",
-	"LocalizationString",
-	"NonLocalizationString",
-	"Identifier",
-	"Call",
-	"WaitOptionSelection",
-	"WaitInteraction",
-	"Dialog",
-	"DialogWithOptions",
-	"Option",
-	"Command",
-	"Jump",
-	"IndirectJump",
-	"Condition",
-	"Code",
-	"Equal",
-	"NotEqual",
-	"Greater",
-	"GreaterOrEqual",
-	"Less",
-	"LessOrEqual",
+global_variable string StatementAsString[] = {
+    BundleStringC("None"),
+	BundleStringC("Number"),
+	BundleStringC("Label"),
+	BundleStringC("DefineLabel"),
+	BundleStringC("LocalizationString"),
+	BundleStringC("NonLocalizationString"),
+	BundleStringC("Identifier"),
+	BundleStringC("Call"),
+	BundleStringC("WaitOptionSelection"),
+	BundleStringC("WaitInteraction"),
+	BundleStringC("Dialog"),
+	BundleStringC("DialogWithOptions"),
+	BundleStringC("Option"),
+	BundleStringC("Command"),
+	BundleStringC("Jump"),
+	BundleStringC("IndirectJump"),
+	BundleStringC("Condition"),
+	BundleStringC("Code"),
+	BundleStringC("Equal"),
+	BundleStringC("NotEqual"),
+	BundleStringC("Greater"),
+	BundleStringC("GreaterOrEqual"),
+	BundleStringC("Less"),
+	BundleStringC("LessOrEqual"),
 };
 
-internal std::string 
-GetTabs(int tabs)
+global_variable char StrTabs[30];
+internal string
+GetTabs(int Tabs)
 {
-    std::string result = "";
-    for(int i = 0; i < tabs; ++i)
-        result += " ";
-    return result;
+    int Index = 0;
+    for(; Index < Tabs; ++Index)
+    {
+        assert(Index < 30);
+        StrTabs[Index] = ' ';
+    }
+    
+    return MakeString(StrTabs, Index);;
 }
 
 function void 
 PrintAST(const statement* Statement, int Tab = 0)
 {    
-    printf("%s%s", GetTabs(Tab).c_str(), StatementAsString[(int)Statement->Type].c_str())    ;
+    string StrTabResult = GetTabs(Tab);
+    string StrStatement = StatementAsString[(int)Statement->Type];
+    printf("%.*s%.*s", StrTabResult.Size, StrTabResult.Data, StrStatement.Size, StatementAsString->Data);
     if (IsAtomStatement(Statement))
     {
         if (Statement->Type == statement_type::Number)
