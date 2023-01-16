@@ -1,15 +1,14 @@
 #!/bin/bash
-echo
-echo "Building Rincewind..."
-echo
+set echo off
 
+echo "Building Rincewind..."
 echo "Cleaning..."
-make clean
+make -s clean
 
 sh ./generate.sh
 
 echo "Compiling..."
 mkdir bin
-make
+make -s
 
 echo "Done"

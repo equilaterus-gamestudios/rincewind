@@ -53,5 +53,11 @@ Rincewind/unicode
 # Generated files
 Rincewind/generated
 
-#rider
+# log files
+*.log
+
+# output files
+Rincewind/examples/output
+
+# rider
 .idea/

@@ -107,7 +107,7 @@ DefineExportFunction(float, WriteFloat)
 #undef WriteFloat
 #undef DefineExportFunction
 
-
+// TODO(pipecaniza): export audio files
 function void
 ExportLocationResource(resource_container* Resource, FILE* File)
 {
@@ -120,6 +120,7 @@ ExportLocationResource(resource_container* Resource, FILE* File)
     }
 }
 
+//NOTE(pipecaniza): The resources as exported as little-endian
 function void
 ExportResources(resource_container* Resource, FILE* File)
 {

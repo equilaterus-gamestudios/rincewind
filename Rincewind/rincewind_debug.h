@@ -63,32 +63,3 @@ PrintAST(const statement* Statement, int Tab = 0)
         PrintAST(&param, Tab + 1);
     }
 }
-
-
-
-/*
-function void
-PrintGeneratedCode(FILE* File)
-{
-    unsigned char a = fgetc(File);
-    unsigned char b = fgetc(File);
-    unsigned char c = fgetc(File);
-    unsigned char d = fgetc(File);
-    printf("%d\n", a);
-    printf("%d\n", b);
-    printf("%d\n", c);
-    printf("%d\n", d);
-
-    int i1 = (d<<24) | (c<<16) | (b<<8) | (a);
-    int i2 = (a<<24) | (b<<16) | (c<<8) | (d);
-    printf("%d\n", i1);
-    printf("mix: %d\n", ChangeEndianness32(((a<<24) | (b<<16) | (c<<8) | (d))));
-
-    int t;
-    uint8* q = (uint8*)(&t);
-    *q = a; q++;
-    *q = b; q++;
-    *q = c; q++;
-    *q = d;
-    printf("%d\n", t);
-}*/

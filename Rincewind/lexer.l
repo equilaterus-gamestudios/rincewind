@@ -105,5 +105,5 @@ ignored		[ \n\t\r]
 {text}			{ return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext))), Ctx->Location);									}
 {ignored}		{ }
 <<EOF>>			{ return yy::parser::make_END				(Ctx->Location);											}
-.				{ std::cout << "Unexpected Token: " << yytext << ", Line: " << yylineno << '\n';						}
+.				{ printf("Unexpected token: %s in line: %d.\n", yytext, yylineno);										}
 %%

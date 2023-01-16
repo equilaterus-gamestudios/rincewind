@@ -29,7 +29,6 @@
 	#include <iostream>
 	#include <cmath>	
 	#include "../rincewind_context.h"
-	#include "lex.yy.cpp"
 
 	#undef yylex
 	#define yylex Lexer.yylex  // Within bison's parse() we should invoke lexer.yylex(), not the global yylex()

@@ -5,7 +5,6 @@
 #include "rincewind_context.h"
 #include "rincewind_common.h"
 #include "rincewind_resource.h"
-#include "rincewind_statement.h"
 #include <cassert>
 
 enum register_type {
@@ -177,9 +176,8 @@ AddLabel(code_gen* CodeGen, const string& Label)
 	const unsigned int Hash = GenerateHash(Label);
 	if (CodeGen->CacheLabels.count(Hash))
 	{
-		//NOTE(pipecaniza): duplicated labels
 		++CodeGen->Context->GeneratingErrors;
-		printf("Label %.*s is duplicated.\n", Label.Size, Label.Data);
+		printf("Genereting code error: Label %.*s is duplicated.\n", Label.Size, Label.Data);
 		return;
 	}
 	CodeGen->CacheLabels.emplace(Hash, CodeGen->CodeSize);
@@ -349,6 +347,12 @@ GenerateInstructions(code_gen* CodeGen, const statement* Statement)
 			default: return;
 	}
 }
+
+#undef PushAndMakeInst
+#undef NONE
+#undef PENDING
+#undef FALSE
+#undef TRUE
 
 internal void
 ProcessLabels(code_gen* CodeGen)

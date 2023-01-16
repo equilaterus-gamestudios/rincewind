@@ -2,7 +2,7 @@
 
 export PATH="$HOME/source/GitHub/RE-flex/bin:$PATH" #change this to point to your reflex location
 
-echo "Cleaning generated"
+echo "Cleaning generated files..."
 rm -r ./generated
 
 echo "Generating files..."
