@@ -30,7 +30,7 @@ public:
 
 
 %{
-	#include <cstdlib>
+	#include <stdlib.h>
 	#include <iostream>	
 		
 	#pragma warning(disable: 4005)
@@ -48,8 +48,6 @@ public:
 		Ctx->Location.begin.column = yycolumn;					\
 		yycolumn += yyleng;							}
 
-//TODO(pipecaniza): re-implement to not modify the char* content
-//TODO(pipecaniza): use trim
 	char* TrimLeft(char* text, char value = ' ')
 	{
 		while (text[0] == value)

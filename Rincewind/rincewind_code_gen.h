@@ -4,8 +4,9 @@
 #include "rincewind_globals.h"
 #include "rincewind_context.h"
 #include "rincewind_common.h"
+#include "rincewind_memory.h"
 #include "rincewind_resource.h"
-#include <cassert>
+#include <assert.h>
 
 enum register_type {
 	FStringRegister,								// SR	
@@ -109,7 +110,7 @@ instruction MakeInstruction(instruction_type Instruction, int FirstParameter, in
 
 struct pending_label
 {
-	int InstructionIndex;
+	uint16 InstructionIndex;
 	string Label;
 };
 
@@ -140,25 +141,42 @@ MakeMachineCode(uint I32)
 }
 
 //TODO(pipecaniza): set this define
-#define MAX_CODE_SIZE 10000
-#define MAX_PENDING_LABELS 5000
-#define MAX_AUTO_LABELS 5000
+#define MAX_CODE_SIZE 65436 //NOTE(pipecaniza): uint16 - 100
+#define MAX_PENDING_LABELS 9999
+#define MAX_AUTO_LABELS 20000
 struct code_gen
 {
-	machine_code MachineCode[MAX_CODE_SIZE];
-	int MachineCodeSize = 0;
-	instruction Code[MAX_CODE_SIZE];
-	int CodeSize = 0;
+	machine_code* MachineCode;
+	uint16 MachineCodeSize;
+
+	instruction* Code;
+	uint16 CodeSize;
+
 	context* Context;
 	resource_container* Resource;
 
-	std::unordered_map<size_t, int> CacheLabels;
-	pending_label PendingLabels[MAX_PENDING_LABELS];
-	int PendingLabelsSize;
+	// NOTE(pipecaniza): label hash, line code to jump
+	hash_table CacheLabels;
+	pending_label* PendingLabels;
+	uint16 PendingLabelsSize;
 
-	char AutoLabels[MAX_AUTO_LABELS];
-	char* AutoLabelsPtr;
+	uint16* AutoLabels;
+	uint16 AutoLabelsIndex;
 };
+
+inline function code_gen
+MakeCodeGen(context* Context, resource_container* Resource, arena* Arena)
+{
+	code_gen Result = {};
+	Result.Context = Context;
+	Result.Resource = Resource;
+	Result.MachineCode = (machine_code*)ReserveMemory(Arena, sizeof(machine_code) * MAX_CODE_SIZE);
+	Result.Code = (instruction*)ReserveMemory(Arena, sizeof(instruction) * MAX_CODE_SIZE);
+	Result.CacheLabels = MakeHashTable(Arena, MAX_PENDING_LABELS); //TODO(pipecaniza): check this size
+	Result.AutoLabels = (uint16*)ReserveMemory(Arena, sizeof(uint16) * MAX_AUTO_LABELS);
+	Result.PendingLabels = (pending_label*)ReserveMemory(Arena, sizeof(pending_label)* MAX_PENDING_LABELS);
+	return(Result);
+}
 
 
 inline internal void
@@ -173,14 +191,15 @@ PushInstruction(code_gen* CodeGen, instruction&& Instruction)
 inline internal void 
 AddLabel(code_gen* CodeGen, const string& Label)
 {
-	const unsigned int Hash = GenerateHash(Label);
-	if (CodeGen->CacheLabels.count(Hash))
+	uint32 Hash = GenerateHash(Label.Data, Label.Size);
+	int16 Index = GetIndex(&CodeGen->CacheLabels, Hash);
+	if (Index != -1)
 	{
 		++CodeGen->Context->GeneratingErrors;
 		printf("Genereting code error: Label %.*s is duplicated.\n", Label.Size, Label.Data);
 		return;
 	}
-	CodeGen->CacheLabels.emplace(Hash, CodeGen->CodeSize);
+	AddElement(&CodeGen->CacheLabels, Hash, CodeGen->CodeSize);
 }
 
 inline internal void
@@ -193,10 +212,13 @@ AddPendingLabel(code_gen* CodeGen, const string& Label)
 inline internal string
 AddPendingAutoLabel(code_gen* CodeGen)
 {
-	assert(CodeGen->PendingLabelsSize < MAX_PENDING_LABELS);
-	assert(CodeGen->AutoLabelsPtr < CodeGen->AutoLabels + MAX_AUTO_LABELS);
-	string Result = MakeString(CodeGen->AutoLabelsPtr++, 1);
-	CodeGen->PendingLabels[CodeGen->PendingLabelsSize++] = MakePendingLabel(CodeGen->CodeSize, Result);
+	assert(CodeGen->AutoLabelsIndex < MAX_AUTO_LABELS);
+	// NOTE(pipecaniza): We're generating autolabels with string of 2 bytes, from x0000 to xFFFF,
+	// could this generate collisions with real labels? maybe only allow labels with length > 2bytes
+	CodeGen->AutoLabels[CodeGen->AutoLabelsIndex] = CodeGen->AutoLabelsIndex + 1;
+	string Result = MakeString((uint8*)(CodeGen->AutoLabels + CodeGen->AutoLabelsIndex), sizeof(uint16));
+	++CodeGen->AutoLabelsIndex;
+	AddPendingLabel(CodeGen, Result);	
 	return(Result);
 }
 
@@ -215,6 +237,7 @@ NOTE(pipecaniza):
 
 */
 
+// TODO(pipecaniza): separate immediate strings from nonlocalization?
 inline internal int
 AddAtomToResources(resource_container* Resource, const statement* AtomStatement)
 {
@@ -360,10 +383,16 @@ ProcessLabels(code_gen* CodeGen)
 	for (int i = 0; i < CodeGen->PendingLabelsSize; ++i) 
 	{		
 		const pending_label& PendingLabel = CodeGen->PendingLabels[i];
-		const unsigned int Hash = GenerateHash(PendingLabel.Label);
+		const uint32 Hash = GenerateHash(PendingLabel.Label.Data, PendingLabel.Label.Size);
 		assert(PendingLabel.InstructionIndex < CodeGen->CodeSize);
-		assert(CodeGen->CacheLabels.count(Hash));
-		CodeGen->Code[PendingLabel.InstructionIndex].SecondParameter = CodeGen->CacheLabels[Hash];
+		int16 Index = GetIndex(&CodeGen->CacheLabels, Hash);
+		if (Index == -1)
+		{
+			++CodeGen->Context->GeneratingErrors;
+			printf("Genereting code error: Label %.*s is not defined.\n", 
+				PendingLabel.Label.Size, PendingLabel.Label.Data);
+		}
+		CodeGen->Code[PendingLabel.InstructionIndex].SecondParameter = CodeGen->CacheLabels.Values[Index];
 	}
 }
 

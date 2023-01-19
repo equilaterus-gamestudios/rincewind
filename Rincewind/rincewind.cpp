@@ -1,10 +1,11 @@
 /// Project
 //#include "rincewind.h"
-#include <cstring>
+#include <string.h>
 #include <stdio.h>
 
 #include "rincewind_globals.h"
 #include "rincewind_memory.h"
+#include "rincewind_structs.h"
 #include "rincewind_resource.h"
 #include "rincewind_context.h"
 #include "rincewind_code_gen.h"
@@ -12,26 +13,35 @@
 #include "rincewind_debug.h"
 #endif
 
+#ifndef PROFILING
 #include "generated/lex.yy.cpp"
 #include "generated/parser.cpp"
+#endif
 
 
 struct compiler
 {
     arena Arena;
     context Context;
+    code_gen CodeGen;
     resource_container Resource;
+#ifndef PROFILING
     yy::lexer Lexer;
     yy::parser Parser;
-    code_gen CodeGen;
+#endif
 
-    compiler(FILE* File) : Lexer(&Context, File, NULL), Parser(Lexer)
+    compiler(FILE* File) 
+#ifndef PROFILING
+    : Lexer(&Context, File, NULL), Parser(Lexer)
+#endif
     {
+        Arena = MakeArena();
         Context.Arena = &Arena;
-        CodeGen.Context = &Context;
-        CodeGen.Resource = &Resource;
+        Resource = MakeResourceContainer(&Arena);
+        CodeGen = MakeCodeGen(&Context, &Resource, &Arena);
     }
 };
+
 
 int main(int argc, char** argv)
 {
@@ -51,11 +61,16 @@ int main(int argc, char** argv)
     }
 
     compiler Compiler(InputFile);
+#ifndef PROFILING
     Compiler.Parser.parse();
-    fclose(InputFile);
-#ifdef DEBUG
-    PrintAST(&Compiler.Context.AbstractTree);
+    #ifdef DEBUG
+        PrintAST(&Compiler.Context.AbstractTree);
+    #endif
+#else
+    Compiler.Context.AbstractTree = MakeAST();
 #endif
+
+    fclose(InputFile);
 
     if (Compiler.Context.ParsingErrors != 0)
     {

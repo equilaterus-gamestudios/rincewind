@@ -33,22 +33,22 @@ global_variable string StatementAsString[] = {
 	BundleStringC("LessOrEqual"),
 };
 
-global_variable char StrTabs[30];
+global_variable char GlobalStrTabs[30];
 internal string
-GetTabs(int Tabs)
+GetTabs(uint8 Tabs)
 {
     int Index = 0;
     for(; Index < Tabs; ++Index)
     {
         assert(Index < 30);
-        StrTabs[Index] = ' ';
+        GlobalStrTabs[Index] = ' ';
     }
     
-    return MakeString(StrTabs, Index);;
+    return MakeString((uint8*)GlobalStrTabs, Index);;
 }
 
 function void 
-PrintAST(const statement* Statement, int Tab = 0)
+PrintAST(const statement* Statement, uint8 Tab = 0)
 {    
     string StrTabResult = GetTabs(Tab);
     string StrStatement = StatementAsString[(int)Statement->Type];

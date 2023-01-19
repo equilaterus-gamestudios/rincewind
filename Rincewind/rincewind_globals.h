@@ -1,4 +1,4 @@
-//#include <stdint.h>
+#include <stdint.h>
 
 #define local_variable static
 #define global_variable static
@@ -9,6 +9,9 @@
 #define Megabytes(Value) (Kilobytes(Value)*1024)
 #define Gigabytes(Value) (Megabytes(Value)*1024)
 
-//TODO(pipecaniza) set as uc
-//typedef int8_t int8;
-typedef char uint8;
+typedef int8_t int8;
+typedef uint8_t uint8;
+typedef int16_t int16;
+typedef uint16_t uint16;
+typedef int32_t int32;
+typedef uint32_t uint32;

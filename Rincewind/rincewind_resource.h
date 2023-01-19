@@ -2,12 +2,12 @@
 ///Project
 #include "rincewind_globals.h"
 #include "rincewind_common.h"
+#include "rincewind_memory.h"
 ///STL
-#include <cassert>
-#include <unordered_map>
-#include <cstdio>
+#include <assert.h>
+#include <stdio.h>
 
-
+// TODO(pipecaniza):check these values
 #define MAX_LOCALIZATION_DATA 5000
 #define MAX_NON_LOCALIZATION_DATA 5000
 #define MAX_IMMEDIATE_STR_DATA 5000
@@ -18,59 +18,78 @@
 //NOTE(pipecaniza): complete buffer of the region, follow by each data, in case of strings, int followed by char[]
 struct resource_container
 {
-    string LocalizationData[MAX_LOCALIZATION_DATA];
-    string NonLocalizationData[MAX_NON_LOCALIZATION_DATA];
-    string ImmediateStringData[MAX_IMMEDIATE_STR_DATA];
-    float ImmediateNumberData[MAX_IMMEDIATE_STR_DATA];
+    string* LocalizationDataArray;
+    string* NonLocalizationDataArray;
+    string* ImmediateStringDataArray;
+    float* ImmediateNumberDataArray;
 
-    int LocalizationDataIndex = 0;
-    int NonLocalizationDataIndex = 0;
-    int ImmediateNumberDataIndex = 0;
-    int ImmediateStringDataIndex = 0;
+    uint32 LocalizationDataIndex;
+    uint32 NonLocalizationDataIndex;
+    uint32 ImmediateNumberDataIndex;
+    uint32 ImmediateStringDataIndex;
 
-    //TODO(pipecaniza): check this, char* aren´t null terminal
-    std::unordered_map<char*, int> UniqueLocalizationTable; 
-    std::unordered_map<char*, int> UniqueNonLocalizationTable;
-    std::unordered_map<char*, int> UniqueImmediateStringTable;
-    std::unordered_map<float, int> UniqueImmediateNumberTable;
+    hash_table LocalizationCache;
+    hash_table NonLocalizationCache;
+    hash_table ImmediateStringCache;
+    hash_table ImmediateNumberCache;
 };
 
-#define InsertResource(Cache, Table, Index, Data, DataCache) \
-if (!Cache.count(DataCache))\
+inline function resource_container
+MakeResourceContainer(arena* Arena)
+{
+    resource_container Result = {};
+
+    Result.LocalizationDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_LOCALIZATION_DATA);
+    Result.NonLocalizationDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_NON_LOCALIZATION_DATA);
+    Result.ImmediateStringDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_IMMEDIATE_STR_DATA);
+    Result.ImmediateNumberDataArray = (float*)ReserveMemory(Arena, sizeof(float) * MAX_IMMEDIATE_FLOAT_DATA);
+
+    Result.LocalizationCache = MakeHashTable(Arena, MAX_LOCALIZATION_DATA);
+    Result.NonLocalizationCache = MakeHashTable(Arena, MAX_NON_LOCALIZATION_DATA);
+    Result.ImmediateStringCache = MakeHashTable(Arena, MAX_IMMEDIATE_STR_DATA);
+    Result.ImmediateNumberCache = MakeHashTable(Arena, MAX_IMMEDIATE_FLOAT_DATA);
+    return(Result);
+}
+
+
+#define InsertResource(Cache, TableData, DataIndex, Data, DataToHash, DataSizeInBytes) \
+uint32 Hash =  GenerateHash(DataToHash, DataSizeInBytes);\
+int16 Index = GetIndex(&Cache, Hash);\
+if (Index == -1)\
 {\
-    Cache.emplace(DataCache, Index);\
-    Table[Index] = Data;\
-    return (Index++);\
+    AddElement(&Cache, Hash, DataIndex);\
+    TableData[DataIndex] = Data;\
+    return (DataIndex++);\
 }\
-return Cache[DataCache];
+return Cache.Values[Index];
 
 
-function int
+function uint16
 InsertLocalization(resource_container* Resource, const string& String)
 {
     assert(Resource->LocalizationDataIndex < MAX_LOCALIZATION_DATA);
-    InsertResource(Resource->UniqueLocalizationTable, Resource->LocalizationData, Resource->LocalizationDataIndex, String, String.Data)
+    InsertResource(Resource->LocalizationCache, Resource->LocalizationDataArray, Resource->LocalizationDataIndex, String, String.Data, String.Size)
 }
 
-function int
+function uint16
 InsertNonLocalizationData(resource_container* Resource, const string& String)
 {
     assert(Resource->NonLocalizationDataIndex < MAX_NON_LOCALIZATION_DATA);
-    InsertResource(Resource->UniqueNonLocalizationTable, Resource->NonLocalizationData, Resource->NonLocalizationDataIndex, String, String.Data)
+    InsertResource(Resource->NonLocalizationCache, Resource->NonLocalizationDataArray, Resource->NonLocalizationDataIndex, String, String.Data, String.Size)
 }
-
-function int
+/*
+function uint16
 InsertImmediateStringData(resource_container* Resource, const string& String)
 {
     assert(Resource->ImmediateStringDataIndex < MAX_IMMEDIATE_STR_DATA);
-    InsertResource(Resource->UniqueImmediateStringTable, Resource->ImmediateStringData, Resource->ImmediateStringDataIndex, String, String.Data)
-}
+    InsertResource(Resource->ImmediateStringCache, Resource->ImmediateStringData, Resource->ImmediateStringDataIndex, String, String.Data, String.Size)
+}*/
 
-function int 
+function uint16
 InsertImmediateNumberData(resource_container* Resource, float Number)
 {
     assert(Resource->ImmediateNumberDataIndex < MAX_IMMEDIATE_FLOAT_DATA);
-    InsertResource(Resource->UniqueImmediateNumberTable, Resource->ImmediateNumberData, Resource->ImmediateNumberDataIndex, Number, Number)
+    InsertResource(Resource->ImmediateNumberCache, Resource->ImmediateNumberDataArray, Resource->ImmediateNumberDataIndex, Number, &Number, sizeof(float))
 }
 #undef InsertResource
 
@@ -88,13 +107,13 @@ Write32(int Data, FILE* File)
 #define WriteString Write32(Struct->Size, File);\
 fwrite(Struct->Data, sizeof(uint8), Struct->Size, File);
 
-#define WriteFloat Write32(*reinterpret_cast<int*>(Struct), File);
+#define WriteFloat Write32(*(uint32*)(Struct), File);
 
 #define DefineExportFunction(Type, Write)\
 internal void ExportResourceAsBinary(int Index, Type* Ptr, FILE* File)\
 {\
     fwrite(&Index, sizeof(Index), 1, File);\
-    for (int i = 0; i < Index; ++i) {\
+    for (uint32 i = 0; i < Index; ++i) {\
         Type* Struct = Ptr++;\
         Write\
     }\
@@ -111,11 +130,11 @@ DefineExportFunction(float, WriteFloat)
 function void
 ExportLocationResource(resource_container* Resource, FILE* File)
 {
-    fprintf(File, "Key,SourceString,Comment\n");
+    fprintf(File, "Key,SourceString,Audio\n");
     
-    for (int i = 0; i < Resource->LocalizationDataIndex; ++i)
+    for (uint32 i = 0; i < Resource->LocalizationDataIndex; ++i)
     {
-        const string& String = Resource->LocalizationData[i];
+        const string& String = Resource->LocalizationDataArray[i];
         fprintf(File, "\"%d\",\"%.*s\",\"None\"\n", i, String.Size, String.Data);        
     }
 }
@@ -124,7 +143,7 @@ ExportLocationResource(resource_container* Resource, FILE* File)
 function void
 ExportResources(resource_container* Resource, FILE* File)
 {
-    ExportResourceAsBinary(Resource->NonLocalizationDataIndex, Resource->NonLocalizationData, File);
-    ExportResourceAsBinary(Resource->ImmediateStringDataIndex, Resource->ImmediateStringData, File);
-    ExportResourceAsBinary(Resource->ImmediateNumberDataIndex, Resource->ImmediateNumberData, File);
+    ExportResourceAsBinary(Resource->NonLocalizationDataIndex, Resource->NonLocalizationDataArray, File);
+    ExportResourceAsBinary(Resource->ImmediateStringDataIndex, Resource->ImmediateStringDataArray, File);
+    ExportResourceAsBinary(Resource->ImmediateNumberDataIndex, Resource->ImmediateNumberDataArray, File);
 }

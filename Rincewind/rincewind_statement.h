@@ -38,12 +38,13 @@ enum class statement_type
 };
 
 struct statement;
+//TODO(pipecaniza): use a custom vector
 typedef std::vector<statement> parameters;
 
 //TODO(pipecaniza): find a way to move out values from statement.
 struct statement
 {
-	statement_type Type = statement_type::None;
+	statement_type Type;
 	string StrValue;
 	float NumericValue;
 
@@ -53,7 +54,7 @@ struct statement
 internal
 statement MakeStatement(statement_type Type)
 {
-	statement Statement;	
+	statement Statement = {};
 	Statement.Type = Type;
 	return (Statement);
 }
@@ -134,19 +135,7 @@ statement CreateCode(parameters CodeStatements)
 	Statement.Parameters = CodeStatements;
 	return (Statement);
 }
-/*
-function
-statement CreateCommand(std::string Variable, std::string Value)
-{
-	statement Statement = MakeStatement(EXECUTE_COMMAND, statement_type::Command);
-	std::string FixedVariable = Variable.substr(1);
-	FixedVariable[0] = toupper(FixedVariable[0]);
-	AddParameter(&Statement, "Variable", FixedVariable);
-	AddParameter(&Statement, "Value", Value);
-	Statement.bByPass = false;
-	return Statement;
-}
-*/
+
 inline function
 statement CreateJump(statement LabelStatement)
 {
@@ -208,94 +197,9 @@ statement CreateLogicalOperation(statement_type Type, statement A, statement B)
 	return (Statement);
 }
 
-/*
-function
-statement CreateCondition(conditional_type ConditionType, std::string FirstAlias, std::string SecondAlias)
-{
-	statement Statement = MakeStatement("Condition", statement_type::Condition);
-	AddParameter(&Statement, "ConditionType", std::to_string(ConditionType));
-	AddParameter(&Statement, "FirstAlias", FirstAlias);
-	AddParameter(&Statement, "SecondAlias", SecondAlias);
-	
-	return (Statement);
-}*/
-
 inline function
 statement CreateWaitOptionSelection()
 {
 	statement Statement = MakeStatement(statement_type::WaitOptionSelection);
 	return (Statement);
 }
-/*
-function
-statement CreateOptionFromJump(resource* Resources, statement* JumpStatement)
-{	
-	//If is a condition, then, get the jump from the internal statements
-	if (JumpStatement->Type == statement_type::Condition)
-	{
-		//JumpStatement is a condition
-		//For now, lets get the first one
-		statement* RealJumpStatement = &JumpStatement->InternalStatement.front();			
-		statement Option = CreateOption(Resources, RealJumpStatement->Parameters["Text"]);
-		AddParameter(&Option, "Line", RealJumpStatement->Parameters["Line"]);
-		JumpStatement->InternalStatement[0] = Option;
-		return (JumpStatement); //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
-	}		
-
-	statement OptionStatement = CreateOption(Resources, JumpStatement->Parameters["Text"]);
-	AddParameter(&OptionStatement, "Line", JumpStatement->Parameters["Line"]);
-
-	return OptionStatement;
-}
-
-function
-statement CreateDialogFromJump(resource* Resources, std::string Title, statement* JumpStatement)
-{
-	//This should not happen!!!!!
-	//If is a condition, then, get the jump from the internal statements
-	if (JumpStatement->Type == statement_type::Condition)
-	{
-		//JumpStatement is a condition
-		//For now, lets get the first one
-		statement* RealJumpStatement = &JumpStatement->InternalStatement.front();
-		JumpStatement->InternalStatement[0] = CreateDialog(Resources, Title, RealJumpStatement.Parameters["Text"]);
-		AddParameter(&JumpStatement->InternalStatement[0], "Line", RealJumpStatement.Parameters["Line"]);
-		return (JumpStatement); //REVIEW THIS!!!!!!!!!!!!!!!!!!!!!!!!!!
-	}
-
-	statement DialogStatement = CreateDialog(Resources, Title, JumpStatement->Parameters["Text"]);
-	AddParameter(DialogStatement, "Line", JumpStatement->Parameters["Line"]);
-
-	return (DialogStatement);
-}
-
-*//*
-function
-statement JoinTwoStatements(FStatement& FirstStatement, FStatement& SecondStatement)
-{
-	return TStatements{ FirstStatement, SecondStatement };
-}
-
-function
-void AtBegining(FStatement& Statement, TStatements& Statements)
-{
-	Statements.emplace(Statements.begin(), Statement);
-}
-
-function
-void AtEnd(FStatement& Statement, TStatements& Statements)
-{
-	Statements.push_back(Statement);
-}
-
-function
-TStatements JointTwoListOfStatements(TStatements& FirstStatements, TStatements& SecondStatements)
-{
-	TStatements JoinedStatements;
-	JoinedStatements.reserve(FirstStatements.size() + SecondStatements.size());// preallocate memory    
-	
-	JoinedStatements.insert(JoinedStatements.end(), FirstStatements.begin(), FirstStatements.end());
-	JoinedStatements.insert(JoinedStatements.end(), SecondStatements.begin(), SecondStatements.end());
-
-	return JoinedStatements;
-}*/
