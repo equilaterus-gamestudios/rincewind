@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "rincewind_globals.h"
+#include "rincewind_common.h"
 #include "rincewind_memory.h"
 #include "rincewind_structs.h"
 #include "rincewind_resource.h"
@@ -57,7 +58,7 @@ int main(int argc, char** argv)
     if (InputFile == NULL)
     {
         printf("File not found: %s.\n", FilePath);
-        return -1;
+        return(-1);
     }
 
     compiler Compiler(InputFile);
@@ -75,7 +76,7 @@ int main(int argc, char** argv)
     if (Compiler.Context.ParsingErrors != 0)
     {
         printf("Errors were found while parsing the source code.\n");
-        return -1;
+        return(-1);
     }
 
     GenerateCode(&Compiler.CodeGen);
@@ -84,7 +85,7 @@ int main(int argc, char** argv)
     if (Compiler.Context.GeneratingErrors != 0)
     {
         printf("Errors were found while generating the code.\n");
-        return -1;
+        return(-1);
     }
 
     strcpy(FilePath, OutputPath); strcat(FilePath, OutputFileName); strcat(FilePath, ".dialog");
@@ -99,5 +100,5 @@ int main(int argc, char** argv)
     fclose(FileCode);
     fclose(FileResources);
 
-    return 0;
+    return(0);
 }

@@ -1,7 +1,5 @@
 #pragma once
 #include <stdlib.h>
-#include <assert.h>
-#include <string.h>
 #include "rincewind_globals.h"
 #include "rincewind_common.h"
 

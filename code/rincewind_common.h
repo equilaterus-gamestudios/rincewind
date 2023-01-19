@@ -1,8 +1,6 @@
 #pragma once
-#include "rincewind_globals.h"
-#include "rincewind_memory.h"
-#include <string.h>
 #include <assert.h>
+#include "rincewind_globals.h"
 
 struct buffer
 {

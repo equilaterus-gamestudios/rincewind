@@ -5,10 +5,6 @@
 #include "generated/location.hh"
 #endif
 
-#include "rincewind_common.h"
-#include "rincewind_memory.h"
-#include "rincewind_globals.h"
-#include "rincewind_statement.h"
 
 #ifndef PROFILING
 #define YY_DECL \

@@ -46,18 +46,16 @@ bld/
 # Visual Studio 2015 cache/options directory
 .vs/
 
-# Library
-Rincewind/lib
-Rincewind/unicode
-
 # Generated files
-Rincewind/generated
+code/generated
 
 # log files
 *.log
+*.data
+*.data.old
 
 # output files
-Rincewind/examples/output
+examples/output
 
 # rider
 .idea/

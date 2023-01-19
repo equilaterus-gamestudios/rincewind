@@ -21,6 +21,6 @@ $call NewMission 100 true
 ```
 #cosas
 -character2:
-[mal](#end)
+[mala](#end)
 
 #end
