@@ -10,7 +10,7 @@ echo "Compiling..."
 mkdir ../bin
 
 flags="-std=c++11 -stdlib=libstdc++"
-debugFlags="-D DEBUG -g"
+debugFlags="-D DEBUG -g" #-D VERBOSE
 profilingFlags="-D PROFILING=1 -fno-exceptions -fno-rtti -pedantic -Wall -Werror -pthreads -fno-omit-frame-pointer"
 #profilingFlags="-D PROFILING=1 -fno-exceptions -pedantic -Wall -pthreads -fno-omit-frame-pointer -g"
 

@@ -9,14 +9,15 @@ enum class statement_type
 	/*Atom types*/
 	Number,	
 	Label,
-	DefineLabel,
-	LocalizationString,
+	DefineLabel,	
 	NonLocalizationString, 
 	Identifier,
 	Call,
 	WaitOptionSelection,
 	WaitInteraction,
-	/**/
+	Audio,
+	/*Non-Termianl*/
+	LocalizationString,	// NOTE(pipecaniza): this is a non-terminal because we can store audio inside.
 	Dialog,
 	DialogWithOptions,
 	Option,
@@ -65,7 +66,7 @@ IsAtomStatement(const statement* Statement)
 	if (Statement->Type == statement_type::LocalizationString || Statement->Type == statement_type::NonLocalizationString 
 	|| Statement->Type == statement_type::Call    || Statement->Type == statement_type::Identifier 
 	|| Statement->Type == statement_type::Label	  || Statement->Type == statement_type::Number
-	|| Statement->Type == statement_type::DefineLabel)
+	|| Statement->Type == statement_type::DefineLabel || Statement->Type == statement_type::Audio)
 		return true;
 	return false;
 }
@@ -79,9 +80,19 @@ statement CreateNonLocalizationString(string String)
 }
 
 inline function
-statement CreateLocalizationString(string String)
+statement CreateLocalizationString(string String, statement AudioStatement)
 {
 	statement Statement = MakeStatement(statement_type::LocalizationString);
+	Statement.StrValue = String;
+	if (AudioStatement.Type == statement_type::Audio)
+		Statement.Parameters.push_back(AudioStatement);
+	return (Statement);
+}
+
+inline function
+statement CreateAudio(string String)
+{
+	statement Statement = MakeStatement(statement_type::Audio);
 	Statement.StrValue = String;
 	return (Statement);
 }

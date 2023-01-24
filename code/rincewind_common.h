@@ -1,5 +1,4 @@
 #pragma once
-#include <assert.h>
 #include "rincewind_globals.h"
 
 struct buffer

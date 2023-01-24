@@ -239,12 +239,23 @@ NOTE(pipecaniza):
 
 // TODO(pipecaniza): separate immediate strings from nonlocalization?
 inline internal int
-AddAtomToResources(resource_container* Resource, const statement* AtomStatement)
+AddAtomToResources(resource_container* Resource, statement* AtomStatement)
 {
 	switch (AtomStatement->Type) 
 	{
 	case statement_type::LocalizationString:
-		return InsertLocalization(Resource, AtomStatement->StrValue);
+	{
+		uint8 ParametersSize = AtomStatement->Parameters.size();
+		assert(ParametersSize == 0 || ParametersSize == 1);
+		string* AudioString = 0;
+		// NOTE(pipecaniza): we have an audio statement		
+		if (ParametersSize)
+		{
+			AudioString = &AtomStatement->Parameters[0].StrValue;
+		}
+		return InsertLocalization(Resource, &AtomStatement->StrValue, AudioString);
+	}
+		
 	case statement_type::Number:
 		return InsertImmediateNumberData(Resource, AtomStatement->NumericValue);	
 	case statement_type::NonLocalizationString:		
@@ -277,7 +288,7 @@ GetLogicalOp(const statement* Statement)
 #define FALSE 0
 #define TRUE 1
 internal void
-GenerateInstructions(code_gen* CodeGen, const statement* Statement)
+GenerateInstructions(code_gen* CodeGen, statement* Statement)
 {
 	switch (Statement->Type) 
 	{

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "rincewind_memory.h"
+#include <cassert>
 #define MAX_MAP_SIZE 65535
 struct hash_table
 {
@@ -60,4 +62,35 @@ GetIndex(hash_table* HashTable, uint32 Hash)
     }
 
     return(-1);
+}
+
+
+struct array
+{
+    uint8* Values;
+    uint8 ValueSizeInBytes;
+    uint16 Size;
+    uint16 Index;
+
+    arena* Arena;
+};
+
+inline function array
+MakeArray(arena* Arena, uint8 ValueSizeInBytes, uint16 Size)
+{
+    array Result = {};
+    Result.ValueSizeInBytes = ValueSizeInBytes;
+    Result.Size = Size;
+    Result.Values = ReserveMemory(Arena, ValueSizeInBytes * Size);
+    Result.Arena = Arena;
+
+    return(Result);
+}
+
+inline function void
+AddElement(array* Array, void* Element)
+{
+    assert(Array->Index < Array->Size);
+    PushToMemoryAtLocation(Array->Arena, Array->Values, Element, Array->ValueSizeInBytes);
+    Array->Index++;
 }

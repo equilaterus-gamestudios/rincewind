@@ -5,7 +5,7 @@
 #include "rincewind_memory.h"
 ///STL
 #include <assert.h>
-#include <stdio.h>
+#include <cstdio>
 
 // TODO(pipecaniza):check these values
 #define MAX_LOCALIZATION_DATA 5000
@@ -19,16 +19,17 @@
 struct resource_container
 {
     string* LocalizationDataArray;
+    string* LocalizationAudioDataArray;
     string* NonLocalizationDataArray;
     string* ImmediateStringDataArray;
     float* ImmediateNumberDataArray;
 
+    // NOTE(pipecaniza): we're sharing this index with text and audio resources
     uint32 LocalizationDataIndex;
     uint32 NonLocalizationDataIndex;
     uint32 ImmediateNumberDataIndex;
     uint32 ImmediateStringDataIndex;
 
-    hash_table LocalizationCache;
     hash_table NonLocalizationCache;
     hash_table ImmediateStringCache;
     hash_table ImmediateNumberCache;
@@ -40,11 +41,11 @@ MakeResourceContainer(arena* Arena)
     resource_container Result = {};
 
     Result.LocalizationDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_LOCALIZATION_DATA);
+    Result.LocalizationAudioDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_LOCALIZATION_DATA);
     Result.NonLocalizationDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_NON_LOCALIZATION_DATA);
     Result.ImmediateStringDataArray = (string*)ReserveMemory(Arena, sizeof(string) * MAX_IMMEDIATE_STR_DATA);
     Result.ImmediateNumberDataArray = (float*)ReserveMemory(Arena, sizeof(float) * MAX_IMMEDIATE_FLOAT_DATA);
 
-    Result.LocalizationCache = MakeHashTable(Arena, MAX_LOCALIZATION_DATA);
     Result.NonLocalizationCache = MakeHashTable(Arena, MAX_NON_LOCALIZATION_DATA);
     Result.ImmediateStringCache = MakeHashTable(Arena, MAX_IMMEDIATE_STR_DATA);
     Result.ImmediateNumberCache = MakeHashTable(Arena, MAX_IMMEDIATE_FLOAT_DATA);
@@ -65,10 +66,15 @@ return Cache.Values[Index];
 
 
 function uint16
-InsertLocalization(resource_container* Resource, const string& String)
+InsertLocalization(resource_container* Resource, string* Text, string* Audio)
 {
     assert(Resource->LocalizationDataIndex < MAX_LOCALIZATION_DATA);
-    InsertResource(Resource->LocalizationCache, Resource->LocalizationDataArray, Resource->LocalizationDataIndex, String, String.Data, String.Size)
+    Resource->LocalizationDataArray[Resource->LocalizationDataIndex] = *Text;
+    if (Audio)
+    {
+        Resource->LocalizationAudioDataArray[Resource->LocalizationDataIndex] = *Audio;
+    }
+    return Resource->LocalizationDataIndex++;
 }
 
 function uint16
@@ -134,8 +140,18 @@ ExportLocationResource(resource_container* Resource, FILE* File)
     
     for (uint32 i = 0; i < Resource->LocalizationDataIndex; ++i)
     {
-        const string& String = Resource->LocalizationDataArray[i];
-        fprintf(File, "\"%d\",\"%.*s\",\"None\"\n", i, String.Size, String.Data);        
+        const string& Text = Resource->LocalizationDataArray[i];
+        const string& Audio = Resource->LocalizationAudioDataArray[i];
+        fprintf(File, "\"%d\",\"%.*s\",", i, Text.Size, Text.Data);
+        if (Audio.Size)
+        {
+            fprintf(File, "\"%.*s\"", Audio.Size, Audio.Data);
+        }
+        else 
+        {
+            fprintf(File, "\"\"");
+        }
+        fprintf(File,"\n");
     }
 }
 

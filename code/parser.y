@@ -33,6 +33,8 @@
 	#undef yylex
 	#define yylex Lexer.yylex  // Within bison's parse() we should invoke lexer.yylex(), not the global yylex()
 
+	//#define A Lexer.Ctx->Arena
+
 %}
 
 %token			END 0
@@ -57,6 +59,7 @@
 	GREATER			">"
 	LESS			"<"
 	NOT				"~"
+	HIGHLIGHT		"`"
 
 %type<string>	LABEL	
 %type<string>	IDENTIFIER
@@ -64,7 +67,7 @@
 %type<string>	TEXT
 %type<statement_type> condition_sign
 
-%type<statement>  script_statement condition jump indirect_jump option script dialog statement
+%type<statement>  script_statement condition jump indirect_jump option script dialog statement localization_text
 %type<parameters> options script_body statements
 
 %start screenplay
@@ -89,12 +92,12 @@ statement:		dialog							{ $$ = $1;																}
 |				error							{ $$ = statement();														}
 ;
 
-dialog:			"-" TEXT ":" TEXT				{ $$ = CreateDialog(CreateNonLocalizationString($2), CreateLocalizationString($4));			}
-|				"-" TEXT ":" indirect_jump		{ $$ = CreateDialog(CreateNonLocalizationString($2), $4); 						}
-|				"-" TEXT ":" options			{ $$ = CreateDialogWithOptions(CreateNonLocalizationString($2), $4); 			}
-|				"-" TEXT ":" condition TEXT		{ $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), CreateLocalizationString($5))); }
-|				"-" TEXT ":" condition indirect_jump { $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), $5)); }
-|				"-" TEXT ":" condition options	{ $$ = CreateCondition($4, CreateDialogWithOptions(CreateNonLocalizationString($2), $5)); 	}
+dialog:			"-" TEXT ":" localization_text			{ $$ = CreateDialog(CreateNonLocalizationString($2), $4);									}
+|				"-" TEXT ":" indirect_jump				{ $$ = CreateDialog(CreateNonLocalizationString($2), $4); 									}
+|				"-" TEXT ":" options					{ $$ = CreateDialogWithOptions(CreateNonLocalizationString($2), $4); 						}
+|				"-" TEXT ":" condition localization_text{ $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), $5)); 				}
+|				"-" TEXT ":" condition indirect_jump 	{ $$ = CreateCondition($4, CreateDialog(CreateNonLocalizationString($2), $5)); 				}
+|				"-" TEXT ":" condition options			{ $$ = CreateCondition($4, CreateDialogWithOptions(CreateNonLocalizationString($2), $5)); 	}
 ;
 
 options:		options option					{ $1.push_back($2); $$ = $1;											}
@@ -102,15 +105,20 @@ options:		options option					{ $1.push_back($2); $$ = $1;											}
 ;
 
 option:			"*" indirect_jump				{ $$ = CreateOption($2);												}
-|				"*" TEXT						{ $$ = CreateOption(CreateLocalizationString($2));									}
+|				"*" localization_text			{ $$ = CreateOption($2);												}
 |				"*" indirect_jump condition		{ $$ = CreateCondition($3, CreateOption($2));							}
-|				"*" TEXT condition				{ $$ = CreateCondition($3, CreateOption(CreateLocalizationString($2)));				}
+|				"*" localization_text condition	{ $$ = CreateCondition($3, CreateOption($2));							}
 ;
 
-indirect_jump:	"[" TEXT "]" "(" LABEL ")"		{ $$ = CreateIndirectJump(CreateLocalizationString($2), CreateLabel($5)); 			}
+indirect_jump:	"[" TEXT "]" "(" LABEL ")"				{ $$ = CreateIndirectJump(CreateLocalizationString($2, {}), CreateLabel($5)); 						}
+|				"[" TEXT "]" "(" LABEL ")" "`" TEXT "`" { $$ = CreateIndirectJump(CreateLocalizationString($2, CreateAudio($8)), CreateLabel($5)); 			}
 ;
 
 jump:			"[" TEXT "]" "(" LABEL ")"		{ $$ = CreateJump(CreateLabel($5)); 									}
+;
+
+localization_text:	TEXT "`" TEXT "`"			{ $$ = CreateLocalizationString($1, CreateAudio($3));					}
+|					TEXT						{ $$ = CreateLocalizationString($1, {}); 								}
 ;
 
 script:			"```" script_body "```"			{ $$ = CreateCode($2); 													}
@@ -123,10 +131,10 @@ script_body:	script_body script_statement	{ $1.push_back($2); $$ = $1; 									
 script_statement:	CALL TEXT					{ $$ = CreateCall($2);													}
 ;
 
-condition:		"|" IDENTIFIER									{ $$ = CreateLogicalOperation(statement_type::NotEqual, CreateIdentifier($2), CreateNumber(0)); }
-|				"|" "!" IDENTIFIER								{ $$ = CreateLogicalOperation(statement_type::Equal, CreateIdentifier($3), CreateNumber(0));	}
-|				"|" IDENTIFIER condition_sign NUMCONST			{ $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateNumber($4)); 						}
-|				"|" IDENTIFIER condition_sign IDENTIFIER		{ $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateIdentifier($4));					}
+condition:		 "|" IDENTIFIER							  { $$ = CreateLogicalOperation(statement_type::NotEqual, CreateIdentifier($2), CreateNumber(0)); 	}
+|				 "|" "!" IDENTIFIER						  { $$ = CreateLogicalOperation(statement_type::Equal, CreateIdentifier($3), CreateNumber(0));		}
+|				 "|" IDENTIFIER condition_sign NUMCONST	  { $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateNumber($4)); 						}
+|				 "|" IDENTIFIER condition_sign IDENTIFIER { $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateIdentifier($4));						}
 ;
 
 condition_sign:	">"								{ $$ = statement_type::Greater; 										}

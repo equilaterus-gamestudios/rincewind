@@ -1,6 +1,4 @@
 #pragma once
-#include <stdio.h>
-
 ///Project
 #include "rincewind_common.h"
 #include "rincewind_globals.h"
@@ -10,13 +8,14 @@ global_variable string StatementAsString[] = {
     BundleStringC("None"),
 	BundleStringC("Number"),
 	BundleStringC("Label"),
-	BundleStringC("DefineLabel"),
-	BundleStringC("LocalizationString"),
+	BundleStringC("DefineLabel"),	
 	BundleStringC("NonLocalizationString"),
 	BundleStringC("Identifier"),
 	BundleStringC("Call"),
 	BundleStringC("WaitOptionSelection"),
 	BundleStringC("WaitInteraction"),
+    BundleStringC("Audio"),
+    BundleStringC("LocalizationString"),
 	BundleStringC("Dialog"),
 	BundleStringC("DialogWithOptions"),
 	BundleStringC("Option"),

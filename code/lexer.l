@@ -31,7 +31,6 @@ public:
 
 %{
 	#include <stdlib.h>
-	#include <iostream>	
 		
 	#pragma warning(disable: 4005)
 	#pragma GCC diagnostic ignored "-Wmacro-redefined"
@@ -67,41 +66,53 @@ public:
 		}
 		return text;
 	}
+
+	#define PrintDebugToken\	
+	printf("%s\n", yytext);
+	#if defined(DEBUG) && defined(VERBOSE)
+		#define PDT PrintDebugToken
+	#else
+		#define PDT
+	#endif
+	/*
+	full_text	"`"{text}"`"
+
+*/
 %}
 
-digits		[0-9]+
-identifier	[$][_]?[a-zA-Z][a-zA-Z_0-9]*
-label		[#]+[ ]?[a-zA-Z][a-zA-Z_0-9]*
-text		[a-zA-Z0-9ñáéíóú',.¿?¡!{}][a-zA-Z0-9 ñáéíóú',.¿?¡!{}]+
-full_text	"`"{text}"`"
-
+number		[0-9]+([.]?[0-9]+)
+identifier	[$][_]?[a-zA-Z][0-9a-zA-Z_]*
+label		[#]+[ ]*[0-9a-zA-Z]+
+text		[0-9a-zA-Z_ñáéíóú',.¿?¡!]([0-9a-zA-Z_ñáéíóú',.¿?¡! ]*[0-9a-zA-Z_ñáéíóú',.¿?¡!])?
+full_text	\{{text}\}
 ignored		[ \n\t\r]
 
 %%
-{label}			{ return yy::parser::make_LABEL				(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '#'))), Ctx->Location);		}
-{identifier}	{ 
+{full_text}		{ PDT return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext,'{'), '}')), Ctx->Location);		}
+{label}			{ PDT return yy::parser::make_LABEL				(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '#'))), Ctx->Location);		}
+{identifier}	{ PDT
 					if (std::strcmp(yytext, "$call") == 0)
 						return yy::parser::make_CALL		(Ctx->Location);	
 					return yy::parser::make_IDENTIFIER		(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '$'))), Ctx->Location);				
 				}
-{full_text}		{ return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext,'`'), '`')), Ctx->Location);		}
-"```"			{ return yy::parser::make_SCRIPT_BLOCK		(Ctx->Location);											}
-"*"				{ return yy::parser::make_STAR				(Ctx->Location);											}
-":"				{ return yy::parser::make_COLON				(Ctx->Location);											}	
-"="				{ return yy::parser::make_EQUAL				(Ctx->Location);											}
-"|"				{ return yy::parser::make_STICK				(Ctx->Location);											}
-"$"				{ return yy::parser::make_DOLLAR			(Ctx->Location);											}
-"-"				{ return yy::parser::make_HYPHEN			(Ctx->Location);											}
-"("				{ return yy::parser::make_OPEN_PARENTH		(Ctx->Location);											}	
-")"				{ return yy::parser::make_CLOSE_PARENTH		(Ctx->Location);											}
-"["				{ return yy::parser::make_OPEN_BRACKET		(Ctx->Location);											}	
-"]"				{ return yy::parser::make_CLOSE_BRACKET		(Ctx->Location);											}	
-">"				{ return yy::parser::make_GREATER			(Ctx->Location);											}
-"<"				{ return yy::parser::make_LESS				(Ctx->Location);											}
-"~"				{ return yy::parser::make_NOT				(Ctx->Location);											}
-{digits}		{ return yy::parser::make_NUMCONST			(std::atoi(yytext), Ctx->Location);							}
-{text}			{ return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext))), Ctx->Location);									}
+"```"			{ PDT return yy::parser::make_SCRIPT_BLOCK		(Ctx->Location);											}
+"*"				{ PDT return yy::parser::make_STAR				(Ctx->Location);											}
+":"				{ PDT return yy::parser::make_COLON				(Ctx->Location);											}	
+"="				{ PDT return yy::parser::make_EQUAL				(Ctx->Location);											}
+"|"				{ PDT return yy::parser::make_STICK				(Ctx->Location);											}
+"$"				{ PDT return yy::parser::make_DOLLAR			(Ctx->Location);											}
+"-"				{ PDT return yy::parser::make_HYPHEN			(Ctx->Location);											}
+"("				{ PDT return yy::parser::make_OPEN_PARENTH		(Ctx->Location);											}	
+")"				{ PDT return yy::parser::make_CLOSE_PARENTH		(Ctx->Location);											}
+"["				{ PDT return yy::parser::make_OPEN_BRACKET		(Ctx->Location);											}	
+"]"				{ PDT return yy::parser::make_CLOSE_BRACKET		(Ctx->Location);											}	
+">"				{ PDT return yy::parser::make_GREATER			(Ctx->Location);											}
+"<"				{ PDT return yy::parser::make_LESS				(Ctx->Location);											}
+"~"				{ PDT return yy::parser::make_NOT				(Ctx->Location);											}
+"`"				{ PDT return yy::parser::make_HIGHLIGHT			(Ctx->Location);											}
+{number}		{ PDT return yy::parser::make_NUMCONST			(strtof(yytext, 0), Ctx->Location);							}
+{text}			{ PDT return yy::parser::make_TEXT				(AllocateString(Ctx->Arena, TrimRight(TrimLeft(yytext))), Ctx->Location);									}
 {ignored}		{ }
-<<EOF>>			{ return yy::parser::make_END				(Ctx->Location);											}
-.				{ printf("Unexpected token: %s in line: %d.\n", yytext, yylineno);										}
+<<EOF>>			{ PDT return yy::parser::make_END				(Ctx->Location);											}
+.				{ printf("Unexpected token: %s in line: %d.\n", yytext, yylineno);											}
 %%
