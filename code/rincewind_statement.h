@@ -29,13 +29,17 @@ enum class statement_type
 
 	Code,
 	
-	/*logical*/
+	/*comparison*/
 	Equal,
 	NotEqual,
 	Greater,
 	GreaterOrEqual,
 	Less,
-	LessOrEqual
+	LessOrEqual,
+
+	/*logical*/
+	And,
+	Or
 };
 
 struct statement;
@@ -199,7 +203,17 @@ statement CreateCondition(statement LogicalStatement, statement CodeStatement)
 }
 
 inline function
-statement CreateLogicalOperation(statement_type Type, statement A, statement B)
+statement CreateComparison(statement_type Type, statement A, statement B)
+{
+	statement Statement = MakeStatement(Type);
+	Statement.Parameters.push_back(A);
+	Statement.Parameters.push_back(B);
+
+	return (Statement);
+}
+
+inline function statement
+CreateLogicalOperation(statement_type Type, statement A, statement B)
 {
 	statement Statement = MakeStatement(Type);
 	Statement.Parameters.push_back(A);

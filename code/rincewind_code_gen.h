@@ -6,22 +6,28 @@
 #include "rincewind_common.h"
 #include "rincewind_memory.h"
 #include "rincewind_resource.h"
+#include "rincewind_statement.h"
 #include <assert.h>
 
 enum register_type {
 	FStringRegister,								// SR	
 	IntRegister,									// IR
 	BoolRegister,									// BR
-	FloatRegister,									
-	TextRegister,
+	FloatRegister,									// FR
+	TextRegister,									// TR
 
-	TypeRegister,
+	TypeRegister,									// TyR
 
 	// Memory
-	TemporalIntRegister,							// TIR
+	TemporalIntRegister,							// TIR remove it?
 };
 
 enum logic_ops {
+	And,
+	Or
+};
+
+enum comparison_ops {
 	LessThan,
 	LessOrEqual,
 	GreatThan,
@@ -73,22 +79,26 @@ enum instruction_type {
 	MoveRegister,					// mov (T)xR (T)xR		move data from A to B reg /////remove it???
 
 	// Memory Instructions
-	LoadReadOnly,					// lro xR X				load the TypeReg
-	LoadFromState,					// lfs    X				load the TypeReg, load the correct register
-	LoadFromExternal,				// lfe xR X				load the TypeReg
+	LoadReadOnly,					// lro xR X				load the TyR
+	LoadFromState,					// lfs    X				load the TyR, load the correct register
+	LoadFromExternal,				// lfe xR X				load the TyR
 
 	// Process Instructions
 	ProcessJump,					// jump    X			jump to X
 	ProcessJumpIf,					// jmpf    X			jump to X if BR
 	ProcessTitle,					// prc IR				uses TR
-	ProcessText,					// prc IR				usesTR
+	ProcessText,					// prc IR				uses TR
 	ProcessOption,					// prc IR X             if(BR) use X
 	WaitInteraction,				// wait					
 	WaitOptionInteraction,			// wait					
 	CallFunction,					// call SR
 
 	// Conditional Instructions
-	Compare							// cmp auto X
+	Compare,						// cmp auto X			uses TyR
+	LogicOp,						// lg auto  X			x -> 0 and, x -> 1 or | temp CR X CTR
+
+	StoreCompareResult,				// scr
+	RestoreCompareResult			// rcr
 };
 
 struct instruction
@@ -268,16 +278,27 @@ AddAtomToResources(resource_container* Resource, statement* AtomStatement)
 }
 
 inline internal logic_ops
-GetLogicalOp(const statement* Statement)
+GetLogicOp(const statement* Statement)
 {
 	switch (Statement->Type) 
 	{
-        case statement_type::Equal: return logic_ops::Equal;
-        case statement_type::NotEqual: return logic_ops::NotEqual;
-        case statement_type::Greater: return logic_ops::GreatThan;
-        case statement_type::GreaterOrEqual: return logic_ops::GreatOrEqual;
-        case statement_type::Less: return logic_ops::LessThan;
-        case statement_type::LessOrEqual: return logic_ops::LessOrEqual;
+        case statement_type::And: return logic_ops::And;
+        case statement_type::Or:  return logic_ops::Or;
+		default: assert(0);
+	}
+}
+
+inline internal comparison_ops
+GetComparisonOp(const statement* Statement)
+{
+	switch (Statement->Type) 
+	{
+        case statement_type::Equal: 		 return comparison_ops::Equal;
+        case statement_type::NotEqual: 		 return comparison_ops::NotEqual;
+        case statement_type::Greater: 		 return comparison_ops::GreatThan;
+        case statement_type::GreaterOrEqual: return comparison_ops::GreatOrEqual;
+        case statement_type::Less: 			 return comparison_ops::LessThan;
+        case statement_type::LessOrEqual: 	 return comparison_ops::LessOrEqual;
 		default: assert(0);
 	}
 }
@@ -376,9 +397,22 @@ GenerateInstructions(code_gen* CodeGen, statement* Statement)
 			//TODO(pipecaniza):check the types
 			// Get first operant
 			GenerateInstructions(CodeGen, &Statement->Parameters[0]);
-			PushAndMakeInst(CodeGen, instruction_type::Compare, NONE, GetLogicalOp(Statement));
+			PushAndMakeInst(CodeGen, instruction_type::Compare, NONE, GetComparisonOp(Statement));
 			break;
-			default: return;
+		case statement_type::And:
+		case statement_type::Or:
+			// Get first operant 	
+			GenerateInstructions(CodeGen, &Statement->Parameters[0]);
+			// Store first operant
+			PushAndMakeInst(CodeGen, instruction_type::StoreCompareResult, NONE, NONE);
+			// Get second operant	
+			GenerateInstructions(CodeGen, &Statement->Parameters[1]);
+			// Restore first operant in TCR
+			PushAndMakeInst(CodeGen, instruction_type::RestoreCompareResult, NONE, NONE);
+			PushAndMakeInst(CodeGen, instruction_type::LogicOp, NONE, GetLogicOp(Statement));
+			break;
+		default: 
+			assert(0);
 	}
 }
 

@@ -96,6 +96,8 @@ ignored		[ \n\t\r]
 					return yy::parser::make_IDENTIFIER		(AllocateString(Ctx->Arena, TrimLeft(TrimLeft(yytext, '$'))), Ctx->Location);				
 				}
 "```"			{ PDT return yy::parser::make_SCRIPT_BLOCK		(Ctx->Location);											}
+"&&"			{ PDT return yy::parser::make_AND				(Ctx->Location);											}
+"||"			{ PDT return yy::parser::make_OR				(Ctx->Location);											}
 "*"				{ PDT return yy::parser::make_STAR				(Ctx->Location);											}
 ":"				{ PDT return yy::parser::make_COLON				(Ctx->Location);											}	
 "="				{ PDT return yy::parser::make_EQUAL				(Ctx->Location);											}

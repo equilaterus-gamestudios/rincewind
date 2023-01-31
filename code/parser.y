@@ -45,7 +45,9 @@
 				
 %token
 	CALL			"call"
-	SCRIPT_BLOCK	"```"	
+	SCRIPT_BLOCK	"```"
+	AND				"&&"	
+	OR				"||"
 	STAR			"*"
 	COLON			":"
 	EQUAL			"="
@@ -61,13 +63,16 @@
 	NOT				"~"
 	HIGHLIGHT		"`"
 
+%left "&&"
+%left "||"
+
 %type<string>	LABEL	
 %type<string>	IDENTIFIER
 %type<int>	NUMCONST
 %type<string>	TEXT
 %type<statement_type> condition_sign
 
-%type<statement>  script_statement condition jump indirect_jump option script dialog statement localization_text
+%type<statement>  script_statement condition jump indirect_jump option script dialog statement localization_text exp exp_def exp_el
 %type<parameters> options script_body statements
 
 %start screenplay
@@ -131,10 +136,22 @@ script_body:	script_body script_statement	{ $1.push_back($2); $$ = $1; 									
 script_statement:	CALL TEXT					{ $$ = CreateCall($2);													}
 ;
 
-condition:		 "|" IDENTIFIER							  { $$ = CreateLogicalOperation(statement_type::NotEqual, CreateIdentifier($2), CreateNumber(0)); 	}
-|				 "|" "!" IDENTIFIER						  { $$ = CreateLogicalOperation(statement_type::Equal, CreateIdentifier($3), CreateNumber(0));		}
-|				 "|" IDENTIFIER condition_sign NUMCONST	  { $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateNumber($4)); 						}
-|				 "|" IDENTIFIER condition_sign IDENTIFIER { $$ = CreateLogicalOperation($3, CreateIdentifier($2), CreateIdentifier($4));						}
+condition:		"|" "`" exp "`"					{ $$ = $3;																}
+;
+
+exp:			exp_def							{ $$ = $1; 																}
+|				"(" exp ")"						{ $$ = $2;								 								}
+|				exp "||" exp					{ $$ = CreateLogicalOperation(statement_type::Or, $1, $3); 				}
+|				exp "&&" exp					{ $$ = CreateLogicalOperation(statement_type::And, $1, $3); 			}
+;
+
+exp_def:		exp_el condition_sign exp_el	{ $$ = CreateComparison($2, $1, $3); 										}
+|				exp_el							{ $$ = CreateComparison(statement_type::NotEqual, $1, CreateNumber(0)); 	}
+|				"!" exp_el						{ $$ = CreateComparison(statement_type::Equal, $2, CreateNumber(0));		}
+;
+
+exp_el:			IDENTIFIER						{ $$ = CreateIdentifier($1); 											}
+|				NUMCONST						{ $$ = CreateNumber($1); 												}
 ;
 
 condition_sign:	">"								{ $$ = statement_type::Greater; 										}

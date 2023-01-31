@@ -30,6 +30,8 @@ global_variable string StatementAsString[] = {
 	BundleStringC("GreaterOrEqual"),
 	BundleStringC("Less"),
 	BundleStringC("LessOrEqual"),
+    BundleStringC("And"),
+    BundleStringC("Or"),
 };
 
 global_variable char GlobalStrTabs[30];
